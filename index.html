@@ -1669,12 +1669,12 @@
             var editModalCancel = document.getElementById('editModalCancel');
 
             // ===== دالة التحقق من صلاحية المشرف (معدلة) =====
-            function isAdminUser() {
+           function isAdminUser() {
                 if (!currentUser) return false;
-                // البريد الوحيد للمشرف
-                return currentUser.email === 'a7112119@gmail.com';
+                // تعيين البريد الإلكتروني المحدد فقط كمسؤول للنظام
+                var adminEmail = 'a7112119@gmail.com'; 
+                return currentUser.email === adminEmail;
             }
-
             // ===== دالة تحديث الواجهة (مضافة) =====
             function refreshUI() {
                 // تحديث جميع عناصر الواجهة
