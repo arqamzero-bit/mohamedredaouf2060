@@ -410,6 +410,13 @@
             margin: 3px 0 0;
             opacity: 0.9;
             font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .teacher-info p i {
+            margin-left: 4px;
         }
         h2 {
             text-align: center;
@@ -1559,10 +1566,10 @@
             console.log("❌ Firebase init error:", error);
         }
 
-        // ===== متغيرات عالمية =====
+        // ===== متغيرات عالمية للمخططات =====
         var teacherChartInstance = null;
         var schoolChartInstance = null;
-        var firebaseListenerRef = null; // <-- إضافة متغير المستمع
+        var firebaseListenerRef = null; // مرجع الاستماع للتحديثات
 
         document.addEventListener("DOMContentLoaded", function() {
             // ===== البيانات الافتراضية =====
@@ -1668,68 +1675,42 @@
             var editModalSave = document.getElementById('editModalSave');
             var editModalCancel = document.getElementById('editModalCancel');
 
-            // ===== دالة التحقق من صلاحية المشرف (معدلة) =====
-           function isAdminUser() {
+            // ===== دالة التحقق من صلاحية المشرف =====
+            function isAdminUser() {
                 if (!currentUser) return false;
-                // تعيين البريد الإلكتروني المحدد فقط كمسؤول للنظام
-                var adminEmail = 'a7112119@gmail.com'; 
-                return currentUser.email === adminEmail;
-            }
-            // ===== دالة تحديث الواجهة (مضافة) =====
-            function refreshUI() {
-                // تحديث جميع عناصر الواجهة
-                initStudentsUI();
-                updateTable();
-                updateDateDisplay();
-                renderCalendar();
-                // تحديث بطاقة المعلم إذا كان هناك معلم محدد
-                if (currentTeacherId) {
-                    var teacher = teachersList.find(function(t) { return t.id === currentTeacherId; });
-                    if (teacher) {
-                        var iconClass = teacher.icon || getSubjectIcon(teacher.subject);
-                        teacherCardContainer.innerHTML = '<div class="teacher-card"><div class="teacher-icon"><i class="fa-solid ' +
-                            iconClass + '"></i></div><div class="teacher-info"><h3>' + teacher.name +
-                            '</h3><p>التخصص: ' + teacher.subject + '</p></div></div>';
-                    }
-                }
-                // تحديث المخططات إذا كان المشرف
-                if (isAdminUser()) {
-                    renderAdminVisualCharts();
-                }
-                // تحديث عنوان اللوحة
-                var titleText = classTitleInput.value || (currentTeacherId ? (teachersList.find(function(tch) { return tch.id ===
-                    currentTeacherId; })?.name || "") + ' - ' + (currentClass || "") : "");
-                boardTitleEl.textContent = t.boardTitle + ' - ' + titleText;
+                // البريد الإلكتروني الوحيد للمشرف
+                var adminEmails = ['a7112119@gmail.com'];
+                return adminEmails.includes(currentUser.email);
             }
 
-            // ===== دالة فصل الواجهات حسب الصلاحية (معدلة) =====
+            // ===== دالة فصل الواجهات حسب الصلاحية (معدلة لإظهار الفصول للمشرف) =====
             function applyRoleVisibility() {
                 var isAdmin = isAdminUser();
 
-                // في وضع المشرف، نظهر قسم الفصل ونخفي عناصر المعلم العادي
                 var teacherElements = [
                     document.getElementById('teacherCardContainer'),
                     document.getElementById('students'),
                     document.getElementById('controls'),
                     document.getElementById('tableContainer')
                 ];
-                var classSelectSection = document.getElementById('classSelectSection');
+                var classSection = document.getElementById('classSelectSection');
                 var chartsSection = document.getElementById('adminChartsSection');
 
                 if (isAdmin) {
                     teacherElements.forEach(function(el) { if (el) el.style.display = 'none'; });
-                    // [التعديل] إظهار قسم الفصل (بدلاً من إخفائه)
-                    if (classSelectSection) classSelectSection.style.display = 'flex';
+                    // تعديل: إظهار قائمة الفصول للمشرف بدلاً من إخفائها
+                    if (classSection) classSection.style.display = '';
                     if (chartsSection) chartsSection.style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(function(btn) {
                         btn.classList.add('show');
                     });
                     setTimeout(function() {
                         renderAdminVisualCharts();
+                        renderAdminTable();
                     }, 300);
                 } else {
                     teacherElements.forEach(function(el) { if (el) el.style.display = ''; });
-                    if (classSelectSection) classSelectSection.style.display = '';
+                    if (classSection) classSection.style.display = '';
                     if (chartsSection) chartsSection.style.display = 'none';
                     document.querySelectorAll('.admin-only').forEach(function(btn) {
                         btn.classList.remove('show');
@@ -1743,11 +1724,13 @@
                 }
             }
 
-            // ===== دوال الرسم البياني (بدون تغيير) =====
+            // ===== دالة رسم المخططات البيانية =====
             function renderAdminVisualCharts() {
                 if (!isAdminUser()) return;
+
                 var chartsSection = document.getElementById("adminChartsSection");
                 if (chartsSection) chartsSection.style.display = "block";
+
                 var results = getAllLocalStorageData ? getAllLocalStorageData() : [];
                 if (results.length === 0) {
                     var ctxBar = document.getElementById('teacherBarChart');
@@ -1764,16 +1747,19 @@
                     }
                     return;
                 }
+
                 var teacherStats = {};
                 var totalP = 0,
                     totalA = 0,
                     totalB = 0,
                     totalT = 0;
+
                 results.forEach(function(r) {
                     totalP += (r.participation || 0);
                     totalA += (r.absence || 0);
                     totalB += (r.behavior || 0);
                     totalT += (r.talking || 0);
+
                     var key = r.teacher;
                     if (!teacherStats[key]) {
                         teacherStats[key] = { name: r.teacher, totalRecords: 0, badActions: 0 };
@@ -1781,8 +1767,10 @@
                     teacherStats[key].totalRecords++;
                     teacherStats[key].badActions += ((r.behavior || 0) + (r.talking || 0));
                 });
+
                 var teacherNames = [];
                 var teacherScores = [];
+
                 Object.keys(teacherStats).forEach(function(k) {
                     var g = teacherStats[k];
                     var ضبط_الصف = 100 - ((g.badActions / (g.totalRecords || 1)) * 100);
@@ -1790,10 +1778,12 @@
                     teacherNames.push(g.name);
                     teacherScores.push(ضبط_الصف);
                 });
+
                 var ctxBar = document.getElementById('teacherBarChart');
                 if (!ctxBar) return;
                 var ctxBar2d = ctxBar.getContext('2d');
                 if (teacherChartInstance) { teacherChartInstance.destroy(); }
+
                 teacherChartInstance = new Chart(ctxBar2d, {
                     type: 'bar',
                     data: {
@@ -1827,10 +1817,12 @@
                         }
                     }
                 });
+
                 var ctxPie = document.getElementById('schoolPieChart');
                 if (!ctxPie) return;
                 var ctxPie2d = ctxPie.getContext('2d');
                 if (schoolChartInstance) { schoolChartInstance.destroy(); }
+
                 schoolChartInstance = new Chart(ctxPie2d, {
                     type: 'doughnut',
                     data: {
@@ -1878,11 +1870,12 @@
                 return 'original_names_' + currentTeacherId + '_' + currentClass;
             }
 
-            // ===== دالة FIREBASE_PATH المعدلة (عامة بدون uid) =====
+            // ===== الدالة المعدلة FIREBASE_PATH (مسار عام بدون uid) =====
             function FIREBASE_PATH() {
                 return 'teachers/' + currentTeacherId + '/classes/' + currentClass;
             }
 
+            // ===== دالة showMessage =====
             function showMessage(message, type) {
                 type = type || 'info';
                 var messageDiv = document.createElement('div');
@@ -1899,7 +1892,7 @@
                 }, 4000);
             }
 
-            // ===== دوال الأقسام (بدون تغيير) =====
+            // ===== دوال الأقسام =====
             function saveClassesList() {
                 localStorage.setItem(CLASSES_STORAGE_KEY, JSON.stringify(classesList));
             }
@@ -1945,6 +1938,15 @@
                 if (currentTeacherId) {
                     loadData();
                 }
+                // تحديث بطاقة المعلم
+                updateTeacherCard();
+                // تحديث لوحة المشرف
+                if (isAdminUser()) {
+                    setTimeout(function() {
+                        renderAdminVisualCharts();
+                        renderAdminTable();
+                    }, 100);
+                }
             }
 
             function deleteCurrentClass() {
@@ -1971,6 +1973,13 @@
                 } else {
                     initStudentsUI();
                     updateTable();
+                }
+                updateTeacherCard();
+                if (isAdminUser()) {
+                    setTimeout(function() {
+                        renderAdminVisualCharts();
+                        renderAdminTable();
+                    }, 100);
                 }
             }
 
@@ -2049,7 +2058,7 @@
                 }
             };
 
-            // ===== دوال الترجمة والتحويل (بدون تغيير) =====
+            // ===== دوال الترجمة =====
             function getSubjectIcon(subject) {
                 var map = {
                     'اجتماعيات': 'fa-globe',
@@ -2063,122 +2072,130 @@
                 return map[subject] || 'fa-chalkboard-user';
             }
 
-            function arabicToEnglishTransliteration(arabicName) {
-                if (!arabicName || arabicName.trim() === '') return arabicName;
-                var trimmedName = arabicName.trim();
-                var hasArabic = /[\u0600-\u06FF]/.test(trimmedName);
-                var hasEnglish = /[A-Za-z]/.test(trimmedName);
-                if (!hasArabic && hasEnglish) return trimmedName;
-                var parts = trimmedName.split(/\s+/);
-                var translatedParts = parts.map(function(part) {
-                    part = part.trim();
-                    if (!part) return '';
-                    if (!/[\u0600-\u06FF]/.test(part)) return part;
-                    var charMap = { 'ا': 'a', 'أ': 'a', 'إ': 'e', 'آ': 'aa', 'ء': '', 'ب': 'b', 'ت': 't', 'ث': 'th',
-                        'ج': 'j', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh',
-                        'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k',
-                        'ل': 'l', 'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w', 'ؤ': 'w', 'ي': 'y', 'ى': 'a', 'ئ': 'e',
-                        'ة': 'h'
-                    };
-                    var specialWords = { 'عبدالله': 'Abdullah', 'عبد الله': 'Abdullah', 'عبدالرحمن': 'Abdulrahman',
-                        'عبد الرحمن': 'Abdulrahman' };
-                    if (specialWords[part]) return specialWords[part];
-                    if (part.startsWith('ال') && part.length > 2) {
-                        var withoutAl = part.substring(2);
-                        return 'Al-' + transliterateWord(withoutAl, charMap);
-                    }
-                    if (part.startsWith('عبد') && part.length > 3) {
-                        var remaining = part.substring(3);
-                        var abdSpecialCases = { 'الله': 'Allah', 'الرحمن': 'Rahman', 'العزيز': 'Aziz', 'الهادي': 'Hadi' };
-                        if (abdSpecialCases[remaining]) return 'Abdul' + abdSpecialCases[remaining];
-                        return 'Abdul' + transliterateWord(remaining, charMap);
-                    }
-                    return transliterateWord(part, charMap);
-                }).filter(function(part) { return part !== ''; });
-                return translatedParts.map(function(part) {
-                    if (part && /^[a-z]/.test(part)) return part.charAt(0).toUpperCase() + part.slice(1);
-                    return part;
-                }).join(' ');
+            // ===== دالة تحديث بطاقة المعلم مع إضافة القسم =====
+            function updateTeacherCard() {
+                var teacher = teachersList.find(function(tch) { return tch.id === currentTeacherId; });
+                if (!teacher) {
+                    teacherCardContainer.innerHTML = '';
+                    return;
+                }
+                var iconClass = teacher.icon || getSubjectIcon(teacher.subject);
+                var className = currentClass || 'غير محدد';
+                teacherCardContainer.innerHTML = `
+                    <div class="teacher-card">
+                        <div class="teacher-icon"><i class="fa-solid ${iconClass}"></i></div>
+                        <div class="teacher-info">
+                            <h3>${teacher.name}</h3>
+                            <p>
+                                <span><i class="fas fa-chalkboard"></i> التخصص: ${teacher.subject}</span>
+                                <span><i class="fas fa-book"></i> القسم: ${className}</span>
+                            </p>
+                        </div>
+                    </div>
+                `;
             }
 
-            function transliterateWord(word, charMap) {
-                var result = '';
-                for (var i = 0; i < word.length; i++) {
-                    var char = word[i];
-                    var nextChar = i < word.length - 1 ? word[i + 1] : '';
-                    if (i < word.length - 1) {
-                        var twoChars = char + nextChar;
-                        if (charMap[twoChars]) {
-                            result += charMap[twoChars];
-                            i++;
-                            continue;
+            // ===== دوال Firebase المعدلة =====
+
+            // 2. دالة saveToFirebase المعدلة
+            async function saveToFirebase() {
+                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return;
+                var path = FIREBASE_PATH();
+                if (!path) return;
+                var teacher = teachersList.find(function(t) { return t.id === currentTeacherId; });
+                var saveData = {
+                    datesData: allHistoryData,
+                    originalStudentNames: originalStudentNames,
+                    teacherName: teacher ? teacher.name : '',
+                    teacherSubject: teacher ? teacher.subject : '',
+                    lastUpdated: new Date().toISOString()
+                };
+                try {
+                    await firebaseDb.ref(path).set(saveData);
+                    return true;
+                } catch (e) {
+                    console.error(e);
+                    showMessage(t.firebase.syncError, 'error');
+                    return false;
+                }
+            }
+
+            // 3. دالة listenToFirebase للاستماع للتحديثات الفورية
+            function listenToFirebase() {
+                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return;
+                var path = FIREBASE_PATH();
+                if (!path) return;
+                if (firebaseListenerRef) {
+                    firebaseListenerRef.off();
+                    firebaseListenerRef = null;
+                }
+                var ref = firebaseDb.ref(path);
+                firebaseListenerRef = ref;
+                ref.on('value', function(snapshot) {
+                    var fbData = snapshot.val();
+                    if (fbData) {
+                        if (fbData.datesData) { allHistoryData = fbData.datesData;
+                            localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData)); }
+                        if (fbData.originalStudentNames) { originalStudentNames = fbData.originalStudentNames;
+                            localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(
+                            originalStudentNames)); }
+                        if (fbData.teacherName) boardTitleEl.textContent = t.boardTitle + ' - ' + fbData
+                            .teacherName;
+                        ensureAllStudentsInData();
+                        refreshUI();
+                        if (isAdminUser()) {
+                            setTimeout(function() {
+                                renderAdminVisualCharts();
+                                renderAdminTable();
+                            }, 100);
                         }
+                        showMessage('تم تحديث البيانات من السحابة فوراً', 'success');
                     }
-                    if (charMap[char] !== undefined) result += charMap[char];
-                    else result += char;
+                }, function(error) {
+                    console.error('Firebase listen error:', error);
+                });
+            }
+
+            // 4. دالة loadFromFirebase المعدلة
+            async function loadFromFirebase() {
+                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return false;
+                var path = FIREBASE_PATH();
+                if (!path) return false;
+                try {
+                    var snap = await firebaseDb.ref(path).once('value');
+                    var fbData = snap.val();
+                    if (fbData) {
+                        if (fbData.datesData) { allHistoryData = fbData.datesData;
+                            localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData)); }
+                        if (fbData.originalStudentNames) { originalStudentNames = fbData.originalStudentNames;
+                            localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(
+                            originalStudentNames)); }
+                        if (fbData.teacherName) boardTitleEl.textContent = t.boardTitle + ' - ' + fbData
+                            .teacherName;
+                        loadDataFromLocalStorage();
+                        return true;
+                    }
+                    return false;
+                } catch (e) { console.error(e); return false; }
+            }
+
+            // ===== دالة تحديث الواجهة =====
+            function refreshUI() {
+                updateDisplayNames();
+                ensureAllStudentsInData();
+                initStudentsUI();
+                updateTable();
+                updateDateDisplay();
+                updateTeacherCard();
+                if (isAdminUser()) {
+                    setTimeout(function() {
+                        renderAdminVisualCharts();
+                        renderAdminTable();
+                    }, 100);
                 }
-                result = result.replace(/aa+/g, 'a');
-                result = result.replace(/'+/g, "'");
-                result = result.replace(/\s+/g, ' ').trim();
-                return result;
             }
 
-            function arabicToEnglishNames(namesArray) {
-                return namesArray.map(function(name) { return arabicToEnglishTransliteration(name); });
-            }
-
-            function getDynamicStatus(type, count) {
-                count = parseInt(count) || 0;
-                var text = "";
-                var styleClass = "text-neutral";
-                if (type === 'participation') {
-                    if (count >= 15) { text = "🏆 وسام نجم الأسبوع";
-                        styleClass = "text-gift"; } else if (count >= 12) { text = "🎁 اختيار سؤال";
-                        styleClass = "text-gift"; } else if (count >= 9) { text = "👑 قائد الحصة";
-                        styleClass = "text-gift"; } else if (count >= 6) { text = "🏅 اختيار لعبة";
-                        styleClass = "text-gift"; } else if (count >= 3) { text = "⭐ نقطة بطل";
-                        styleClass = "text-gift"; } else { text = "نشاط";
-                        styleClass = "text-neutral"; }
-                } else if (type === 'talking') {
-                    if (count >= 8) { text = "🔴 متابعة إدارية";
-                        styleClass = "text-danger"; } else if (count >= 6) { text = "📝 كتابة تعهد";
-                        styleClass = "text-danger"; } else if (count >= 4) { text = "🔁 تغيير مكان";
-                        styleClass = "text-warn"; } else if (count >= 2) { text = "⚠ تنبيه شفهي";
-                        styleClass = "text-warn"; } else { text = "تحدث";
-                        styleClass = "text-neutral"; }
-                } else if (type === 'absence') {
-                    if (count === 0) { text = "⭐ نجم الانضباط";
-                        styleClass = "text-gift"; } else if (count >= 7) { text = "متابعة إدارية";
-                        styleClass = "text-danger"; } else if (count >= 5) { text = "إشعار ولي الأمر";
-                        styleClass = "text-danger"; } else if (count >= 3) { text = "ملاحظة";
-                        styleClass = "text-warn"; } else if (count >= 1) { text = "تنبيه";
-                        styleClass = "text-warn"; } else { text = "حضور";
-                        styleClass = "text-neutral"; }
-                } else if (['book', 'notebook', 'homework'].includes(type)) {
-                    if (count >= 8) { text = "متابعة إدارية";
-                        styleClass = "text-danger"; } else if (count >= 6) { text = "إشعار ولي الأمر";
-                        styleClass = "text-danger"; } else if (count >= 4) { text = "ملاحظة";
-                        styleClass = "text-warn"; } else if (count >= 2) { text = "تنبيه";
-                        styleClass = "text-warn"; } else { text = "جاهز";
-                        styleClass = "text-gift"; }
-                } else if (type === 'lateness') {
-                    if (count >= 5) { text = "🔴 حرمان من الحصة";
-                        styleClass = "text-danger"; } else if (count >= 3) { text = "📞 إشعار ولي أمر";
-                        styleClass = "text-warn"; } else if (count >= 1) { text = "⏰ ملاحظة تأخير";
-                        styleClass = "text-warn"; } else { text = "في الوقت";
-                        styleClass = "text-gift"; }
-                } else if (type === 'behavior') {
-                    if (count >= 12) { text = "🔴 تحويل للإدارة";
-                        styleClass = "text-danger"; } else if (count >= 9) { text = "📞 إشعار ولي الأمر";
-                        styleClass = "text-danger"; } else if (count >= 7) { text = "📝 كتابة اعتذار";
-                        styleClass = "text-warn"; } else if (count >= 5) { text = "تغيير مكان";
-                        styleClass = "text-warn"; } else if (count >= 3) { text = "تنبيه";
-                        styleClass = "text-warn"; } else { text = "سلوك";
-                        styleClass = "text-neutral"; }
-                }
-                return { text: text, class: styleClass, count: count };
-            }
-
+            // ===== دوال البيانات =====
             function ensureAllStudentsInData() {
                 var dateKey = formattedSelectedDate();
                 if (!allHistoryData[dateKey]) {
@@ -2198,6 +2215,46 @@
                 });
                 allHistoryData[dateKey] = data;
             }
+
+            function loadDataFromLocalStorage() {
+                allHistoryData = JSON.parse(localStorage.getItem(STORAGE_KEY_DATA())) || {};
+                originalStudentNames = JSON.parse(localStorage.getItem(STORAGE_KEY_ORIGINAL_NAMES())) || [];
+                if (originalStudentNames.length === 0) {
+                    var oldNames = JSON.parse(localStorage.getItem('tracking_names_' + currentTeacherId + '_' +
+                    currentClass)) || [];
+                    originalStudentNames = oldNames.slice();
+                    localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
+                }
+                ensureAllStudentsInData();
+            }
+
+            async function saveAll(showMsg) {
+                showMsg = showMsg || true;
+                if (!currentTeacherId || !currentClass) return;
+                var dateKey = formattedSelectedDate();
+                allHistoryData[dateKey] = data;
+                localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
+                localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
+                if (storageMode === 'cloud' && currentUser) await saveToFirebase();
+            }
+
+            async function loadData() {
+                if (!currentTeacherId || !currentClass) return;
+                var loaded = false;
+                if (storageMode === 'cloud' && currentUser && isFirebaseInitialized) {
+                    loaded = await loadFromFirebase();
+                    listenToFirebase();
+                }
+                if (!loaded) loadDataFromLocalStorage();
+                refreshUI();
+                applyRoleVisibility();
+            }
+
+            function updateDisplayNames() {
+                studentNames = originalStudentNames.slice();
+            }
+
+            function updateDateDisplay() { currentDateDisplayEl.textContent = formattedSelectedDate(); }
 
             // ===== دوال التقويم =====
             function renderCalendar() {
@@ -2249,8 +2306,7 @@
                             }
                             ensureAllStudentsInData();
                             localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
-                            initStudentsUI();
-                            updateTable();
+                            refreshUI();
                             renderCalendar();
                             calendarWrapper.classList.remove('show');
                             updateDateDisplay();
@@ -2260,7 +2316,7 @@
                 }
             }
 
-            // ===== دوال Firebase =====
+            // ===== دوال Firebase Auth =====
             function updateFirebaseUI() {
                 if (currentUser) {
                     var email = currentUser.email || t.firebase.offline;
@@ -2302,44 +2358,6 @@
                 applyRoleVisibility();
             }
 
-            // ===== دالة الاستماع للتغييرات الفورية (مضافة) =====
-            function listenToFirebase() {
-                // إلغاء المستمع السابق إن وجد
-                if (firebaseListenerRef) {
-                    firebaseListenerRef.off();
-                    firebaseListenerRef = null;
-                }
-
-                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return;
-                if (!currentTeacherId || !currentClass) return;
-
-                var path = FIREBASE_PATH();
-                if (!path) return;
-
-                firebaseListenerRef = firebaseDb.ref(path);
-                firebaseListenerRef.on('value', function(snapshot) {
-                    var firebaseData = snapshot.val();
-                    if (firebaseData) {
-                        console.log('🔄 تم استلام تحديث فوري من Firebase');
-
-                        // تحديث البيانات
-                        if (firebaseData.datesData) {
-                            allHistoryData = firebaseData.datesData;
-                            localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
-                        }
-                        if (firebaseData.originalStudentNames) {
-                            originalStudentNames = firebaseData.originalStudentNames;
-                            localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
-                        }
-                        // تحديث الواجهة
-                        refreshUI();
-                    }
-                }, function(error) {
-                    console.error('❌ خطأ في الاستماع:', error);
-                });
-            }
-
-            // ===== دالة تعيين وضع التخزين (معدلة) =====
             function setStorageMode(mode) {
                 storageMode = mode;
                 localStorage.setItem('storage_mode', mode);
@@ -2349,9 +2367,7 @@
                     return;
                 }
                 updateFirebaseUI();
-                if (currentTeacherId && currentClass) {
-                    loadData(); // سيتم استدعاء listenToFirebase داخلياً
-                }
+                if (currentTeacherId && currentClass) loadData();
                 showMessage(mode === 'local' ? t.firebase.storageLocal : t.firebase.storageCloud, 'success');
             }
 
@@ -2548,33 +2564,23 @@
                 }
             }
 
-            // ===== دالة تسجيل الخروج (معدلة) =====
+            // ===== دالة تسجيل الخروج المعدلة (إظهار نموذج تسجيل الدخول) =====
             async function logout() {
-                // إلغاء المستمع
-                if (firebaseListenerRef) {
-                    firebaseListenerRef.off();
-                    firebaseListenerRef = null;
-                }
-
                 try {
                     await firebaseAuth.signOut();
                     currentUser = null;
+                    if (firebaseListenerRef) {
+                        firebaseListenerRef.off();
+                        firebaseListenerRef = null;
+                    }
                     showMessage(t.firebase.logoutSuccess, 'success');
-                    updateFirebaseUI();
-                    applyRoleVisibility();
                     allHistoryData = {};
                     data = {};
                     originalStudentNames = [];
                     studentNames = [];
-                    initStudentsUI();
-                    updateTable();
-                    if (teacherChartInstance) { teacherChartInstance.destroy();
-                        teacherChartInstance = null; }
-                    if (schoolChartInstance) { schoolChartInstance.destroy();
-                        schoolChartInstance = null; }
-                    var dataContainer = document.getElementById('adminDataContainer');
-                    if (dataContainer) dataContainer.style.display = 'none';
-                    // إظهار نموذج تسجيل الدخول تلقائياً
+                    refreshUI();
+                    updateFirebaseUI();
+                    // إظهار نموذج تسجيل الدخول بعد تسجيل الخروج
                     showLoginForm();
                 } catch (error) {
                     console.error("❌ خطأ في تسجيل الخروج:", error);
@@ -2587,7 +2593,7 @@
                     showMessage("يجب تفعيل وضع السحابة وتسجيل الدخول أولاً", 'error');
                     return;
                 }
-                var saved = await saveAll(true);
+                var saved = await saveToFirebase();
                 if (saved) showMessage(t.firebase.syncSuccess, 'success');
             }
 
@@ -2634,53 +2640,30 @@
             }
 
             function selectTeacher(teacherId) {
-                // إلغاء المستمع القديم
-                if (firebaseListenerRef) {
-                    firebaseListenerRef.off();
-                    firebaseListenerRef = null;
-                }
                 currentTeacherId = teacherId;
                 var teacher = teachersList.find(function(t) { return t.id === teacherId; });
                 if (!teacher) return;
-                var iconClass = teacher.icon || getSubjectIcon(teacher.subject);
-                teacherCardContainer.innerHTML = '<div class="teacher-card"><div class="teacher-icon"><i class="fa-solid ' +
-                    iconClass + '"></i></div><div class="teacher-info"><h3>' + teacher.name +
-                    '</h3><p>التخصص: ' + teacher.subject + '</p></div></div>';
+                updateTeacherCard();
                 if (currentClass) loadData();
+                // تحديث لوحة المشرف
+                if (isAdminUser()) {
+                    setTimeout(function() {
+                        renderAdminVisualCharts();
+                        renderAdminTable();
+                    }, 100);
+                }
             }
 
             function selectClass(classId) {
-                // إلغاء المستمع القديم
-                if (firebaseListenerRef) {
-                    firebaseListenerRef.off();
-                    firebaseListenerRef = null;
-                }
                 currentClass = classId;
                 if (currentTeacherId) loadData();
-            }
-
-            // ===== دالة تحميل البيانات (معدلة) =====
-            async function loadData() {
-                if (!currentTeacherId || !currentClass) return;
-                var loaded = false;
-                if (storageMode === 'cloud' && currentUser && isFirebaseInitialized) {
-                    loaded = await loadFromFirebase();
-                    if (loaded) {
-                        console.log("✅ تم تحميل البيانات من Firebase");
-                        // بدء الاستماع بعد التحميل
-                        listenToFirebase();
-                    }
+                updateTeacherCard();
+                if (isAdminUser()) {
+                    setTimeout(function() {
+                        renderAdminVisualCharts();
+                        renderAdminTable();
+                    }, 100);
                 }
-                if (!loaded) loadDataFromLocalStorage();
-                updateDisplayNames();
-                ensureAllStudentsInData();
-                updateDateDisplay();
-                initStudentsUI();
-                updateTable();
-                applyRoleVisibility();
-                setTimeout(function() {
-                    renderAdminVisualCharts();
-                }, 400);
             }
 
             function loadDataFromLocalStorage() {
@@ -2696,98 +2679,12 @@
             }
 
             function updateDisplayNames() {
-                if (originalStudentNames.length === 0) {
-                    studentNames = [];
-                    return;
-                }
                 studentNames = originalStudentNames.slice();
             }
 
             function updateDateDisplay() {
                 var dateStr = formattedSelectedDate();
                 currentDateDisplayEl.textContent = dateStr;
-            }
-
-            // ===== دالة حفظ البيانات (معدلة) =====
-            async function saveAll(showMsg) {
-                showMsg = showMsg || true;
-                if (!currentTeacherId || !currentClass) return;
-                var dateKey = formattedSelectedDate();
-                allHistoryData[dateKey] = data;
-                localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
-                localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
-                if (storageMode === 'cloud' && currentUser) await saveToFirebase();
-            }
-
-            // ===== دالة الحفظ في Firebase (معدلة) =====
-            async function saveToFirebase() {
-                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return;
-                if (!currentTeacherId || !currentClass) return;
-                var path = FIREBASE_PATH();
-                if (!path) return;
-                try {
-                    var teacher = teachersList.find(function(t) { return t.id === currentTeacherId; });
-                    var teacherSubject = teacher ? teacher.subject : 'غير معروف';
-                    var teacherName = teacher ? teacher.name : 'غير معروف';
-
-                    var saveData = {
-                        datesData: allHistoryData,
-                        originalStudentNames: originalStudentNames,
-                        boardTitle: boardTitleEl.textContent,
-                        teacherName: teacherName,
-                        teacherSubject: teacherSubject,
-                        lastUpdated: new Date().toISOString()
-                    };
-                    await firebaseDb.ref(path).set(saveData);
-                    console.log("✅ Saved to Firebase with subject:", teacherSubject);
-                    return true;
-                } catch (error) {
-                    console.error("❌ Error saving to Firebase:", error);
-                    showMessage(t.firebase.syncError, 'error');
-                    return false;
-                }
-            }
-
-            // ===== دالة التحميل من Firebase (معدلة) =====
-            async function loadFromFirebase() {
-                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return false;
-                if (!currentTeacherId || !currentClass) return false;
-                var path = FIREBASE_PATH();
-                if (!path) return false;
-                try {
-                    var snapshot = await firebaseDb.ref(path).once('value');
-                    var firebaseData = snapshot.val();
-                    if (firebaseData) {
-                        if (firebaseData.datesData) {
-                            allHistoryData = firebaseData.datesData;
-                            localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
-                        }
-                        if (firebaseData.originalStudentNames) {
-                            originalStudentNames = firebaseData.originalStudentNames;
-                            localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
-                        }
-                        if (firebaseData.boardTitle) {
-                            boardTitleEl.textContent = firebaseData.boardTitle;
-                            classTitleInput.value = firebaseData.boardTitle.replace(t.boardTitle + " - ", "");
-                        }
-                        if (firebaseData.teacherSubject) {
-                            var teacher = teachersList.find(function(t) { return t.id === currentTeacherId; });
-                            if (teacher) {
-                                teacher.subject = firebaseData.teacherSubject;
-                                saveTeachersList();
-                                console.log("✅ تم تحديث مادة المعلم إلى:", firebaseData.teacherSubject);
-                            }
-                        }
-                        console.log("✅ Loaded from Firebase with subject:", firebaseData.teacherSubject);
-                        loadDataFromLocalStorage();
-                        return true;
-                    }
-                    return false;
-                } catch (error) {
-                    console.error("❌ Error loading from Firebase:", error);
-                    showMessage(t.firebase.syncError, 'error');
-                    return false;
-                }
             }
 
             function saveTeachersList() {
@@ -2838,10 +2735,256 @@
                 syncDataBtn.addEventListener('click', syncData);
             }
 
-            // ===== باقي الأزرار (بدون تغيير) =====
-            // ... (نفس الكود الأصلي للأزرار الأخرى)
+            // ===== زر حذف كل البيانات =====
+            if (clearAllDataBtn) {
+                clearAllDataBtn.addEventListener('click', async function() {
+                    if (!currentUser) {
+                        showMessage('⚠️ الرجاء تسجيل الدخول أولاً', 'error');
+                        return;
+                    }
+                    if (!isAdminUser()) {
+                        showMessage('⚠️ هذه الميزة للمشرف فقط', 'error');
+                        return;
+                    }
 
-            // ===== ربط أزرار المعلمين والطلاب =====
+                    var confirmDelete = confirm(
+                        '🔥 تحذير شديد: هل أنت متأكد من حذف كل البيانات؟\n\nسيتم حذف:\n- جميع المستخدمين (ما عدا المشرف)\n- جميع المعلمين\n- جميع الأقسام\n- جميع الطلاب\n- جميع الأيميلات\n\nلا يمكن التراجع عن هذا الإجراء!'
+                        );
+                    if (!confirmDelete) return;
+
+                    var confirmDelete2 = confirm('⚠️ تأكيد نهائي: هل أنت متأكد من حذف كل البيانات؟\nهذا الإجراء نهائي ولا يمكن التراجع عنه!');
+                    if (!confirmDelete2) return;
+
+                    var confirmDelete3 = prompt('⚠️ للتأكيد النهائي، اكتب كلمة "حذف" في المربع أدناه:');
+                    if (confirmDelete3 !== 'حذف') {
+                        showMessage('❌ تم إلغاء عملية الحذف', 'error');
+                        return;
+                    }
+
+                    showMessage('⏳ جاري حذف كل البيانات...', 'info');
+
+                    try {
+                        var snapshot = await firebaseDb.ref('users').once('value');
+                        var dbUsers = snapshot.val() || {};
+                        var deletedCount = 0;
+                        var keptCount = 0;
+
+                        for (var uid in dbUsers) {
+                            var userData = dbUsers[uid];
+                            var userEmail = userData.profile?.email || '';
+
+                            if (userEmail === 'a7112119@gmail.com') {
+                                keptCount++;
+                                await firebaseDb.ref('users/' + uid + '/teachers').remove();
+                                await firebaseDb.ref('users/' + uid + '/profile/name').remove();
+                                await firebaseDb.ref('users/' + uid + '/profile/lastLogin').remove();
+                                await firebaseDb.ref('users/' + uid + '/profile/role').remove();
+                                await firebaseDb.ref('users/' + uid + '/profile').update({
+                                    email: 'a7112119@gmail.com'
+                                });
+                                console.log('✅ تم تنظيف بيانات المشرف');
+                                continue;
+                            }
+
+                            await firebaseDb.ref('users/' + uid).remove();
+                            deletedCount++;
+                            console.log('🗑️ تم حذف المستخدم:', userEmail || uid);
+                        }
+
+                        localStorage.clear();
+
+                        teachersList = defaultTeachers;
+                        classesList = defaultClasses;
+                        originalStudentNames = [];
+                        studentNames = [];
+                        allHistoryData = {};
+                        data = {};
+
+                        saveTeachersList();
+                        saveClassesList();
+                        initTeacherSelect();
+                        updateClassSelect();
+                        initStudentsUI();
+                        updateTable();
+                        boardTitleEl.textContent = t.boardTitle;
+
+                        showMessage('✅ تم حذف كل البيانات بنجاح!\nتم الاحتفاظ فقط بالمشرف (a7112119@gmail.com)',
+                            'success');
+
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+
+                    } catch (error) {
+                        console.error('❌ خطأ:', error);
+                        showMessage('❌ حدث خطأ: ' + error.message, 'error');
+                    }
+                });
+            }
+
+            // ===== زر تصحيح الأيميلات =====
+            if (fixEmailsBtn) {
+                fixEmailsBtn.addEventListener('click', async function() {
+                    if (!currentUser) {
+                        showMessage('⚠️ الرجاء تسجيل الدخول أولاً', 'error');
+                        return;
+                    }
+                    if (!isAdminUser()) {
+                        showMessage('⚠️ هذه الميزة للمشرف فقط', 'error');
+                        return;
+                    }
+                    showMessage('⏳ جاري تصحيح الأيميلات...', 'info');
+                    try {
+                        var snapshot = await firebaseDb.ref('users').once('value');
+                        var dbUsers = snapshot.val() || {};
+                        var fixedCount = 0;
+                        var usersWithoutEmail = [];
+                        for (var uid in dbUsers) {
+                            var userData = dbUsers[uid];
+                            if (!userData.profile?.email) {
+                                if (uid === currentUser.uid && currentUser.email) {
+                                    await firebaseDb.ref('users/' + uid + '/profile/email').set(currentUser.email);
+                                    fixedCount++;
+                                    console.log('✅ تم إضافة بريد للمشرف: ' + currentUser.email);
+                                } else {
+                                    usersWithoutEmail.push(uid);
+                                }
+                            }
+                        }
+                        if (usersWithoutEmail.length > 0) {
+                            for (var i = 0; i < usersWithoutEmail.length; i++) {
+                                var uid2 = usersWithoutEmail[i];
+                                var email = prompt('📧 أدخل البريد الإلكتروني للمستخدم (UID: ' + uid2.substring(0, 12) +
+                                    '...):');
+                                if (email && email.trim()) {
+                                    await firebaseDb.ref('users/' + uid2 + '/profile/email').set(email.trim());
+                                    fixedCount++;
+                                    console.log('✅ تم إضافة بريد للمستخدم: ' + email.trim());
+                                }
+                            }
+                        }
+                        var resultMessage = '✅ تم تصحيح ' + fixedCount + ' بريد إلكتروني';
+                        if (fixedCount === 0) {
+                            resultMessage = '✅ جميع المستخدمين لديهم بريد إلكتروني صحيح.';
+                        }
+                        showMessage(resultMessage, 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } catch (error) {
+                        console.error('❌ خطأ:', error);
+                        showMessage('❌ حدث خطأ: ' + error.message, 'error');
+                    }
+                });
+            }
+
+            // ===== زر حذف جميع المستخدمين =====
+            if (deleteAllUsersBtn) {
+                deleteAllUsersBtn.addEventListener('click', async function() {
+                    if (!currentUser) {
+                        showMessage('⚠️ الرجاء تسجيل الدخول أولاً', 'error');
+                        return;
+                    }
+                    if (!isAdminUser()) {
+                        showMessage('⚠️ هذه الميزة للمشرف فقط', 'error');
+                        return;
+                    }
+
+                    var confirmDelete = confirm(
+                        '⚠️ تحذير: هل أنت متأكد من حذف جميع المستخدمين ما عدا المشرف (a7112119@gmail.com)؟\n\nسيتم حذف جميع بيانات المستخدمين الآخرين بشكل نهائي!'
+                        );
+                    if (!confirmDelete) return;
+
+                    var confirmDelete2 = confirm('⚠️ تأكيد نهائي: هل أنت متأكد من حذف جميع المستخدمين باستثناء المشرف؟\nلا يمكن التراجع عن هذا الإجراء!'
+                        );
+                    if (!confirmDelete2) return;
+
+                    showMessage('⏳ جاري حذف جميع المستخدمين ما عدا المشرف...', 'info');
+
+                    try {
+                        var snapshot = await firebaseDb.ref('users').once('value');
+                        var dbUsers = snapshot.val() || {};
+                        var deletedCount = 0;
+                        var keptCount = 0;
+
+                        for (var uid in dbUsers) {
+                            var userData = dbUsers[uid];
+                            var userEmail = userData.profile?.email || '';
+
+                            if (userEmail === 'a7112119@gmail.com') {
+                                keptCount++;
+                                console.log('✅ الاحتفاظ بالمشرف:', userEmail);
+                                continue;
+                            }
+
+                            await firebaseDb.ref('users/' + uid).remove();
+                            deletedCount++;
+                            console.log('🗑️ تم حذف المستخدم:', userEmail || uid);
+                        }
+
+                        showMessage('✅ تم حذف ' + deletedCount + ' مستخدم، وتم الاحتفاظ بـ ' + keptCount +
+                            ' مستخدم (المشرف)', 'success');
+
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+
+                    } catch (error) {
+                        console.error('❌ خطأ:', error);
+                        showMessage('❌ حدث خطأ: ' + error.message, 'error');
+                    }
+                });
+            }
+
+            // ===== زر تحديث مواد المعلمين =====
+            if (updateSubjectBtn) {
+                updateSubjectBtn.addEventListener('click', async function() {
+                    if (!currentUser) {
+                        showMessage('⚠️ الرجاء تسجيل الدخول أولاً', 'error');
+                        return;
+                    }
+                    if (!isAdminUser()) {
+                        showMessage('⚠️ هذه الميزة للمشرف فقط', 'error');
+                        return;
+                    }
+
+                    showMessage('⏳ جاري تحديث مواد المعلمين...', 'info');
+
+                    try {
+                        var snapshot = await firebaseDb.ref('users').once('value');
+                        var allData = snapshot.val();
+                        var updatedCount = 0;
+
+                        for (var uid in allData) {
+                            var userData = allData[uid];
+                            if (userData.teachers) {
+                                for (var teacherId in userData.teachers) {
+                                    var teacher = userData.teachers[teacherId];
+                                    var teacherInfo = teachersList.find(function(t) { return t.id === teacherId; });
+                                    var subject = teacherInfo ? teacherInfo.subject : 'غير معروف';
+
+                                    var path = 'users/' + uid + '/teachers/' + teacherId + '/subject';
+                                    await firebaseDb.ref(path).set(subject);
+                                    updatedCount++;
+
+                                    console.log('✅ تم تحديث مادة المعلم ' + teacherId + ' إلى: ' + subject);
+                                }
+                            }
+                        }
+
+                        showMessage('✅ تم تحديث ' + updatedCount + ' معلم بنجاح', 'success');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+
+                    } catch (error) {
+                        console.error('❌ خطأ:', error);
+                        showMessage('❌ حدث خطأ: ' + error.message, 'error');
+                    }
+                });
+            }
+
+            // ===== ربط أزرار المعلمين =====
             addTeacherBtn.addEventListener("click", function() {
                 if (!currentUser) {
                     alert('⚠️ الرجاء تسجيل الدخول أولاً');
@@ -2868,6 +3011,12 @@
                 teacherSelect.value = newTeacher.id;
                 selectTeacher(newTeacher.id);
                 alert("تمت إضافة المعلم بنجاح");
+                if (isAdminUser()) {
+                    setTimeout(function() {
+                        renderAdminVisualCharts();
+                        renderAdminTable();
+                    }, 100);
+                }
             });
 
             deleteTeacherBtn.addEventListener("click", function() {
@@ -2913,6 +3062,12 @@
                     boardTitleEl.textContent = t.boardTitle;
                     initTeacherSelect();
                     alert(t.teacherDeleted);
+                    if (isAdminUser()) {
+                        setTimeout(function() {
+                            renderAdminVisualCharts();
+                            renderAdminTable();
+                        }, 100);
+                    }
                 }
             });
 
@@ -2938,6 +3093,12 @@
                     boardTitleEl.textContent = t.boardTitle;
                     initTeacherSelect();
                     showMessage(t.allTeachersDeleted, 'success');
+                    if (isAdminUser()) {
+                        setTimeout(function() {
+                            renderAdminVisualCharts();
+                            renderAdminTable();
+                        }, 100);
+                    }
                 }
             });
 
@@ -2982,6 +3143,12 @@
                             showMessage("لم يتم إضافة معلمين", 'info');
                         }
                         importTeachersInput.value = '';
+                        if (isAdminUser()) {
+                            setTimeout(function() {
+                                renderAdminVisualCharts();
+                                renderAdminTable();
+                            }, 100);
+                        }
                     } catch (error) {
                         console.error(error);
                         showMessage("خطأ في قراءة الملف", 'error');
@@ -2990,7 +3157,7 @@
                 reader.readAsBinaryString(file);
             });
 
-            // ===== دوال الطلاب (بدون تغيير) =====
+            // ===== دوال الطلاب =====
             function initStudentsUI() {
                 studentsContainer.innerHTML = "";
                 studentNames.forEach(function(displayName) {
@@ -3336,6 +3503,58 @@
                 return td;
             }
 
+            function getDynamicStatus(type, count) {
+                count = parseInt(count) || 0;
+                var text = "";
+                var styleClass = "text-neutral";
+                if (type === 'participation') {
+                    if (count >= 15) { text = "🏆 وسام نجم الأسبوع";
+                        styleClass = "text-gift"; } else if (count >= 12) { text = "🎁 اختيار سؤال";
+                        styleClass = "text-gift"; } else if (count >= 9) { text = "👑 قائد الحصة";
+                        styleClass = "text-gift"; } else if (count >= 6) { text = "🏅 اختيار لعبة";
+                        styleClass = "text-gift"; } else if (count >= 3) { text = "⭐ نقطة بطل";
+                        styleClass = "text-gift"; } else { text = "نشاط";
+                        styleClass = "text-neutral"; }
+                } else if (type === 'talking') {
+                    if (count >= 8) { text = "🔴 متابعة إدارية";
+                        styleClass = "text-danger"; } else if (count >= 6) { text = "📝 كتابة تعهد";
+                        styleClass = "text-danger"; } else if (count >= 4) { text = "🔁 تغيير مكان";
+                        styleClass = "text-warn"; } else if (count >= 2) { text = "⚠ تنبيه شفهي";
+                        styleClass = "text-warn"; } else { text = "تحدث";
+                        styleClass = "text-neutral"; }
+                } else if (type === 'absence') {
+                    if (count === 0) { text = "⭐ نجم الانضباط";
+                        styleClass = "text-gift"; } else if (count >= 7) { text = "متابعة إدارية";
+                        styleClass = "text-danger"; } else if (count >= 5) { text = "إشعار ولي الأمر";
+                        styleClass = "text-danger"; } else if (count >= 3) { text = "ملاحظة";
+                        styleClass = "text-warn"; } else if (count >= 1) { text = "تنبيه";
+                        styleClass = "text-warn"; } else { text = "حضور";
+                        styleClass = "text-neutral"; }
+                } else if (['book', 'notebook', 'homework'].includes(type)) {
+                    if (count >= 8) { text = "متابعة إدارية";
+                        styleClass = "text-danger"; } else if (count >= 6) { text = "إشعار ولي الأمر";
+                        styleClass = "text-danger"; } else if (count >= 4) { text = "ملاحظة";
+                        styleClass = "text-warn"; } else if (count >= 2) { text = "تنبيه";
+                        styleClass = "text-warn"; } else { text = "جاهز";
+                        styleClass = "text-gift"; }
+                } else if (type === 'lateness') {
+                    if (count >= 5) { text = "🔴 حرمان من الحصة";
+                        styleClass = "text-danger"; } else if (count >= 3) { text = "📞 إشعار ولي أمر";
+                        styleClass = "text-warn"; } else if (count >= 1) { text = "⏰ ملاحظة تأخير";
+                        styleClass = "text-warn"; } else { text = "في الوقت";
+                        styleClass = "text-gift"; }
+                } else if (type === 'behavior') {
+                    if (count >= 12) { text = "🔴 تحويل للإدارة";
+                        styleClass = "text-danger"; } else if (count >= 9) { text = "📞 إشعار ولي الأمر";
+                        styleClass = "text-danger"; } else if (count >= 7) { text = "📝 كتابة اعتذار";
+                        styleClass = "text-warn"; } else if (count >= 5) { text = "تغيير مكان";
+                        styleClass = "text-warn"; } else if (count >= 3) { text = "تنبيه";
+                        styleClass = "text-warn"; } else { text = "سلوك";
+                        styleClass = "text-neutral"; }
+                }
+                return { text: text, class: styleClass, count: count };
+            }
+
             function updateTable() {
                 tbody.innerHTML = "";
                 studentNames.forEach(function(displayName, displayIndex) {
@@ -3577,14 +3796,7 @@
                 if (copyrightFooter) copyrightFooter.textContent =
                     "📊 نظام متابعة المعلمين والطلاب - حقوق الملكية © 2026 محمد رضا عوف";
 
-                var teacherCard = document.querySelector('.teacher-card');
-                if (teacherCard) {
-                    var teacherInfo = teacherCard.querySelector('.teacher-info p');
-                    if (teacherInfo) {
-                        teacherInfo.textContent = 'التخصص: ' + (teachersList.find(function(tch) { return tch.id ===
-                            currentTeacherId; })?.subject || '');
-                    }
-                }
+                updateTeacherCard();
 
                 localStorage.setItem('dashboard_lang', 'ar');
                 updateDisplayNames();
@@ -3620,7 +3832,7 @@
                 '12D': { ar: 'ثاني عشر D' }
             };
 
-            // ===== دوال المشرف (بدون تغيير) =====
+            // ===== دوال المشرف =====
             function getTeacherById(id) {
                 return teachersList.find(function(t) { return t.id === id; }) || null;
             }
@@ -4506,44 +4718,49 @@
                 }
             });
 
-            // ===== تهيئة الصفحة =====
-            updateClassSelect();
-            initTeacherSelect();
-            applyArabic();
-            renderCalendar();
-
-            if (isFirebaseInitialized) {
-                initializeFirebaseAuth();
+            // ===== التهيئة المعدلة (اختيار أول معلم وقسم تلقائياً) =====
+            function init() {
+                if (isFirebaseInitialized && firebaseAuth.currentUser) {
+                    currentUser = firebaseAuth.currentUser;
+                }
+                updateClassSelect();
+                initTeacherSelect();
+                applyArabic();
+                renderCalendar();
                 updateFirebaseUI();
+
+                // تحديد القسم والمسؤول الافتراضي تلقائياً
+                if (classesList && classesList.length > 0) {
+                    currentClass = document.getElementById('classSelect').value || classesList[0];
+                }
+                if (teachersList && teachersList.length > 0 && !currentTeacherId) {
+                    currentTeacherId = teachersList[0].id;
+                    teacherSelect.value = currentTeacherId;
+                    selectTeacher(currentTeacherId);
+                }
+
+                applyRoleVisibility();
+                if (isFirebaseInitialized) {
+                    initializeFirebaseAuth();
+                    updateFirebaseUI();
+                    setTimeout(function() {
+                        applyRoleVisibility();
+                        renderAdminVisualCharts();
+                    }, 100);
+                }
+
                 setTimeout(function() {
+                    if (currentTeacherId && currentClass) {
+                        loadData();
+                    }
                     applyRoleVisibility();
-                    renderAdminVisualCharts();
-                }, 100);
+                    setTimeout(function() {
+                        renderAdminVisualCharts();
+                    }, 500);
+                }, 800);
             }
 
-            // ===== تعيين أول معلم وقسم تلقائياً (مع تحميل البيانات فوراً) =====
-            setTimeout(function() {
-                if (teachersList.length > 0) {
-                    // اختيار أول معلم
-                    var firstTeacher = teachersList[0];
-                    teacherSelect.value = firstTeacher.id;
-                    selectTeacher(firstTeacher.id);
-                }
-                if (classesList.length > 0) {
-                    // اختيار أول قسم
-                    var firstClass = classesList[0];
-                    classSelect.value = firstClass;
-                    selectClass(firstClass);
-                }
-                // تحميل البيانات تلقائياً
-                if (currentTeacherId && currentClass) {
-                    loadData();
-                }
-                applyRoleVisibility();
-                setTimeout(function() {
-                    renderAdminVisualCharts();
-                }, 500);
-            }, 800);
+            init();
         });
     </script>
 </body>
