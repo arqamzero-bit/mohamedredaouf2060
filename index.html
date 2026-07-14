@@ -1718,7 +1718,7 @@
 
                 if (isAdmin) {
                     teacherElements.forEach(function(el) { if (el) el.style.display = 'none'; });
-                    // إظهار قسم الفصل (بدلاً من إخفائه)
+                    // [التعديل] إظهار قسم الفصل (بدلاً من إخفائه)
                     if (classSelectSection) classSelectSection.style.display = 'flex';
                     if (chartsSection) chartsSection.style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(function(btn) {
@@ -4521,7 +4521,7 @@
                 }, 100);
             }
 
-            // ===== تعيين أول معلم وقسم تلقائياً (إضافة جديدة) =====
+            // ===== تعيين أول معلم وقسم تلقائياً (مع تحميل البيانات فوراً) =====
             setTimeout(function() {
                 if (teachersList.length > 0) {
                     // اختيار أول معلم
@@ -4535,7 +4535,7 @@
                     classSelect.value = firstClass;
                     selectClass(firstClass);
                 }
-                // تحميل البيانات
+                // تحميل البيانات تلقائياً
                 if (currentTeacherId && currentClass) {
                     loadData();
                 }
