@@ -1543,12 +1543,11 @@
 
     <script>
         // ===== إعدادات Firebase (تم التعديل للمشروع الجديد) =====
-        // ⚠️ يرجى استبدال هذه القيم بقيم مشروع Firebase الجديد الخاص بك
         var firebaseConfig = {
-            apiKey: "AIzaSyD86DaAqtNcIdTj5nz6A73eF-pn7k8j9es", // استبدل بمفتاحك
-            authDomain: "mohamedreda85-ebf3d.firebaseapp.com", // استبدل بنطاقك
-            databaseURL: "https://mohamedreda85-ebf3d-default-rtdb.firebaseio.com/", // رابط قاعدة البيانات
-            projectId: "mohamedreda85-ebf3d", // معرف المشروع
+            apiKey: "AIzaSyD86DaAqtNcIdTj5nz6A73eF-pn7k8j9es",
+            authDomain: "mohamedreda85-ebf3d.firebaseapp.com",
+            databaseURL: "https://mohamedreda85-ebf3d-default-rtdb.firebaseio.com/",
+            projectId: "mohamedreda85-ebf3d",
             storageBucket: "mohamedreda85-ebf3d.firebasestorage.app",
             messagingSenderId: "478928361982",
             appId: "1:478928361982:web:e952c44fd1ec3bb6b508af",
@@ -1684,7 +1683,7 @@
                 return adminEmails.includes(currentUser.email);
             }
 
-            // ===== دالة فصل الواجهات حسب الصلاحية (التعديل: إظهار الفصول للمشرف) =====
+            // ===== دالة فصل الواجهات حسب الصلاحية =====
             function applyRoleVisibility() {
                 var isAdmin = isAdminUser();
 
@@ -1699,7 +1698,6 @@
 
                 if (isAdmin) {
                     teacherElements.forEach(function(el) { if (el) el.style.display = 'none'; });
-                    // تعديل: إظهار قائمة الفصول للمشرف بدلاً من إخفائها
                     if (classSection) classSection.style.display = '';
                     if (chartsSection) chartsSection.style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(function(btn) {
@@ -1871,10 +1869,9 @@
                 return 'original_names_' + currentTeacherId + '_' + currentClass;
             }
 
-            // ===== المسار الجديد المتوافق مع قواعد الأمان (التعديل) =====
+            // ===== المسار الجديد المتوافق مع قواعد الأمان =====
             function FIREBASE_PATH() {
                 if (!currentUser) return null;
-                // المسار: users/{teacherId}/supervisors/{adminUid}/classes/{classId}
                 return 'users/' + currentTeacherId + '/supervisors/' + currentUser.uid + '/classes/' + currentClass;
             }
 
@@ -2122,16 +2119,29 @@
                 }
             }
 
-            // ===== المزامنة التلقائية (Real-time) =====
+            // ===== المزامنة التلقائية (Real-time) - مع التعديل لاختيار الفصل تلقائياً =====
             function startAutomaticSync() {
-                // إلغاء المستمع السابق إذا وجد
+                // إلغاء المستمع السابق إن وجد
                 if (firebaseSyncListener) {
                     firebaseSyncListener.off();
                     firebaseSyncListener = null;
                 }
 
-                if (!currentUser || storageMode !== 'cloud' || !currentTeacherId || !currentClass) {
-                    console.log('⚠️ لا يمكن بدء المزامنة التلقائية: البيانات غير مكتملة');
+                // التأكد من وجود فصل – إن لم يكن محدداً، اختر أول فصل تلقائياً
+                if (!currentClass) {
+                    const classSelectEl = document.getElementById('classSelect');
+                    if (classSelectEl && classSelectEl.options.length > 0) {
+                        classSelectEl.selectedIndex = 0;
+                        currentClass = classSelectEl.value;
+                        console.log('🔁 تم اختيار الفصل تلقائياً للمزامنة:', currentClass);
+                    } else {
+                        console.warn('⚠️ لا يوجد فصول متاحة للمزامنة التلقائية');
+                        return;
+                    }
+                }
+
+                if (!currentUser || storageMode !== 'cloud' || !currentTeacherId) {
+                    console.log('⚠️ شروط المزامنة التلقائية غير مكتملة');
                     return;
                 }
 
@@ -2268,12 +2278,13 @@
                 if (storageMode === 'cloud' && currentUser) await saveToFirebase();
             }
 
+            // ===== تحميل البيانات (مع بدء المزامنة التلقائية فوراً) =====
             async function loadData() {
                 if (!currentTeacherId || !currentClass) return;
                 var loaded = false;
                 if (storageMode === 'cloud' && currentUser && isFirebaseInitialized) {
                     loaded = await loadFromFirebase();
-                    // بدء المزامنة التلقائية بعد تحميل البيانات
+                    // بدء المزامنة التلقائية بعد التحميل
                     startAutomaticSync();
                 }
                 if (!loaded) loadDataFromLocalStorage();
@@ -2621,13 +2632,36 @@
                 }
             }
 
+            // ===== دالة المزامنة اليدوية (مع اختيار الفصل تلقائياً) =====
             async function syncData() {
                 if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') {
                     showMessage("يجب تفعيل وضع السحابة وتسجيل الدخول أولاً", 'error');
                     return;
                 }
-                var saved = await saveToFirebase();
-                if (saved) showMessage(t.firebase.syncSuccess, 'success');
+
+                let selectedClass = document.getElementById('classSelect').value;
+                // حل مشكلة المزامنة: إذا كان المستخدم مشرفاً ولم يختر فصلاً، يتم تحديد أول فصل متاح تلقائياً
+                if (!selectedClass && isAdminUser()) {
+                    const classSelectEl = document.getElementById('classSelect');
+                    if (classSelectEl && classSelectEl.options.length > 0) {
+                        classSelectEl.selectedIndex = 0;
+                        selectedClass = classSelectEl.value;
+                        currentClass = selectedClass;
+                        console.log('🔁 تم اختيار الفصل تلقائياً للمزامنة:', selectedClass);
+                    }
+                }
+
+                if (!selectedClass) {
+                    showMessage("⚠️ لم يتم تحديد فصل، الرجاء اختيار فصل للمزامنة", 'warning');
+                    return;
+                }
+
+                const saved = await saveToFirebase();
+                if (saved) {
+                    showMessage(t.firebase.syncSuccess, 'success');
+                    // بعد المزامنة، نبدأ الاستماع للتحديثات
+                    startAutomaticSync();
+                }
             }
 
             function initializeFirebaseAuth() {
@@ -2672,12 +2706,17 @@
                 });
             }
 
+            // ===== دوال اختيار المعلم والقسم مع بدء المزامنة التلقائية =====
             function selectTeacher(teacherId) {
                 currentTeacherId = teacherId;
                 var teacher = teachersList.find(function(t) { return t.id === teacherId; });
                 if (!teacher) return;
                 updateTeacherCard();
-                if (currentClass) loadData();
+                if (currentClass) {
+                    loadData().then(() => {
+                        if (storageMode === 'cloud' && currentUser) startAutomaticSync();
+                    });
+                }
                 if (isAdminUser()) {
                     setTimeout(function() {
                         renderAdminVisualCharts();
@@ -2688,7 +2727,11 @@
 
             function selectClass(classId) {
                 currentClass = classId;
-                if (currentTeacherId) loadData();
+                if (currentTeacherId) {
+                    loadData().then(() => {
+                        if (storageMode === 'cloud' && currentUser) startAutomaticSync();
+                    });
+                }
                 updateTeacherCard();
                 if (isAdminUser()) {
                     setTimeout(function() {
@@ -4762,7 +4805,11 @@
 
                 setTimeout(function() {
                     if (currentTeacherId && currentClass) {
-                        loadData();
+                        loadData().then(() => {
+                            if (storageMode === 'cloud' && currentUser) {
+                                startAutomaticSync();
+                            }
+                        });
                     }
                     applyRoleVisibility();
                     setTimeout(function() {
