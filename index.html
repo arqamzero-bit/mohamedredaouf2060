@@ -2638,33 +2638,27 @@
                 if (storageMode === 'cloud' && currentUser) await saveToFirebase();
             }
 
-            async function saveToFirebase() {
-                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return;
-                if (!currentTeacherId || !currentClass) return;
-                var path = FIREBASE_PATH();
-                if (!path) return;
-                try {
-                    var teacher = teachersList.find(function(t) { return t.id === currentTeacherId; });
-                    var teacherSubject = teacher ? teacher.subject : 'غير معروف';
-                    var teacherName = teacher ? teacher.name : 'غير معروف';
-
-                    var saveData = {
-                        datesData: allHistoryData,
-                        originalStudentNames: originalStudentNames,
-                        boardTitle: boardTitleEl.textContent,
-                        teacherName: teacherName,
-                        teacherSubject: teacherSubject,
-                        lastUpdated: new Date().toISOString()
-                    };
-                    await firebaseDb.ref(path).set(saveData);
-                    console.log("✅ Saved to Firebase with subject:", teacherSubject);
-                    return true;
-                } catch (error) {
-                    console.error("❌ Error saving to Firebase:", error);
-                    showMessage(t.firebase.syncError, 'error');
-                    return false;
-                }
-            }
+           async function saveToFirebase() {
+  if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return;
+  var path = FIREBASE_PATH();
+  if (!path) return;
+  var sup = supervisorsList.find(s => s.id === currentSupervisorId);
+  var saveData = {
+    datesData: allHistoryData,
+    originalStudentNames: originalStudentNames,
+    supervisorName: sup ? sup.name : '',
+    supervisorRole: sup ? sup.subject : '',
+    lastUpdated: new Date().toISOString()
+  };
+  try {
+    await firebaseDb.ref(path).set(saveData);
+    return true;
+  } catch (e) {
+    console.error(e);
+    showMessage(T.firebase.syncError, 'error');
+    return false;
+  }
+}
 
             async function loadFromFirebase() {
                 if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return false;
