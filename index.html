@@ -1285,6 +1285,8 @@
             <button id="updateSubjectBtn" class="firebase-btn btn-update-subject admin-only"><i class="fas fa-edit"></i> تحديث مواد المعلمين</button>
             <button id="clearAllDataBtn" class="firebase-btn btn-danger admin-only"><i class="fas fa-fire"></i> حذف كل البيانات</button>
             <button id="viewAllDataBtn" class="firebase-btn btn-view-data admin-only"><i class="fas fa-database"></i> عرض جميع البيانات</button>
+            <!-- زر الترحيل (اختياري) -->
+            <button id="migrateDataBtn" class="firebase-btn btn-warning admin-only" style="background:#d97706;color:white;"><i class="fas fa-arrow-right"></i> ترحيل البيانات القديمة</button>
 
             <div id="firebaseStatus" class="firebase-status offline"><i class="fas fa-wifi"></i> غير متصل</div>
         </div>
@@ -1655,6 +1657,7 @@
             var importExcel = document.getElementById("importExcel");
             var importExcelLabel = document.getElementById("importExcelLabel");
             var exportExcel = document.getElementById("exportExcel");
+            var migrateDataBtn = document.getElementById("migrateDataBtn");
 
             var editModal = document.getElementById('editModal');
             var editStudentNameDisplay = document.getElementById('editStudentNameDisplay');
@@ -1868,11 +1871,11 @@
                 return 'original_names_' + currentTeacherId + '_' + currentClass;
             }
 
-            // ===== المسار الجديد: يبدأ بـ "users" كما هو مطلوب =====
+            // ===== المسار الجديد الموحد =====
             function FIREBASE_PATH() {
-                if (!currentUser) return null;
-                var adminUid = currentUser.uid;
-                return 'users/' + currentTeacherId + '/supervisors/' + adminUid + '/classes/' + currentClass;
+                if (!currentTeacherId || !currentClass) return null;
+                // مسار موحد لكل المستخدمين (معلم ومشرف)
+                return 'school_data/' + currentTeacherId + '/classes/' + currentClass;
             }
 
             // ===== دالة showMessage =====
@@ -2982,6 +2985,51 @@
                         showMessage('❌ حدث خطأ: ' + error.message, 'error');
                     }
                 });
+            }
+
+            // ===== دالة ترحيل البيانات القديمة (للمشرف) =====
+            async function migrateOldDataToNewPath() {
+                if (!currentUser || !isAdminUser()) {
+                    showMessage('⚠️ هذه العملية للمشرف فقط', 'error');
+                    return;
+                }
+                showMessage('⏳ جاري ترحيل البيانات القديمة...', 'info');
+                try {
+                    var snapshot = await firebaseDb.ref('users').once('value');
+                    var allUsers = snapshot.val() || {};
+                    var migrated = 0;
+                    for (var uid in allUsers) {
+                        var userData = allUsers[uid];
+                        if (userData.teachers) {
+                            for (var teacherId in userData.teachers) {
+                                var teacher = userData.teachers[teacherId];
+                                if (teacher.classes) {
+                                    for (var className in teacher.classes) {
+                                        var oldPath = 'users/' + uid + '/teachers/' + teacherId + '/classes/' + className;
+                                        // التحقق من وجود بيانات قديمة
+                                        var oldSnap = await firebaseDb.ref(oldPath).once('value');
+                                        var oldData = oldSnap.val();
+                                        if (oldData) {
+                                            var newPath = 'school_data/' + teacherId + '/classes/' + className;
+                                            await firebaseDb.ref(newPath).set(oldData);
+                                            migrated++;
+                                            console.log('✅ تم ترحيل:', oldPath, '→', newPath);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    showMessage('✅ تم ترحيل ' + migrated + ' مجموعة بيانات إلى المسار الجديد', 'success');
+                } catch (e) {
+                    console.error('❌ خطأ في الترحيل:', e);
+                    showMessage('❌ حدث خطأ أثناء الترحيل', 'error');
+                }
+            }
+
+            // ===== ربط زر الترحيل =====
+            if (migrateDataBtn) {
+                migrateDataBtn.addEventListener('click', migrateOldDataToNewPath);
             }
 
             // ===== ربط أزرار المعلمين =====
