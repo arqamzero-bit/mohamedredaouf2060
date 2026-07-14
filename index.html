@@ -1570,7 +1570,7 @@
         // ===== متغيرات عالمية =====
         var teacherChartInstance = null;
         var schoolChartInstance = null;
-        var firebaseSyncListener = null; // مرجع المستمع للمزامنة التلقائية
+        var firebaseSyncListener = null;
 
         document.addEventListener("DOMContentLoaded", function() {
             // ===== البيانات الافتراضية =====
@@ -1676,7 +1676,7 @@
             var editModalSave = document.getElementById('editModalSave');
             var editModalCancel = document.getElementById('editModalCancel');
 
-            // ===== دالة التحقق من صلاحية المشرف (التعديل: المشرف الوحيد هو arqamzero@gmail.com) =====
+            // ===== دالة التحقق من صلاحية المشرف =====
             function isAdminUser() {
                 if (!currentUser) return false;
                 var adminEmails = ['arqamzero@gmail.com'];
@@ -2070,7 +2070,7 @@
                 return map[subject] || 'fa-chalkboard-user';
             }
 
-            // ===== دالة تحديث بطاقة المعلم (إضافة عرض القسم) =====
+            // ===== دالة تحديث بطاقة المعلم =====
             function updateTeacherCard() {
                 var teacher = teachersList.find(function(tch) { return tch.id === currentTeacherId; });
                 if (!teacher) {
@@ -2127,7 +2127,7 @@
                     firebaseSyncListener = null;
                 }
 
-                // التأكد من وجود فصل – إن لم يكن محدداً، اختر أول فصل تلقائياً
+                // ===== تعديل: اختيار الفصل تلقائياً إذا لم يكن محدداً =====
                 if (!currentClass) {
                     const classSelectEl = document.getElementById('classSelect');
                     if (classSelectEl && classSelectEl.options.length > 0) {
@@ -2156,13 +2156,11 @@
                 var dbRef = firebaseDb.ref(path);
                 firebaseSyncListener = dbRef;
 
-                // الاستماع الفوري لأي تغيير في السحابة
                 dbRef.on('value', function(snapshot) {
                     if (snapshot.exists()) {
                         var cloudData = snapshot.val();
                         console.log('☁️ تم استقبال بيانات جديدة من السحابة');
 
-                        // تحديث البيانات المحلية بالبيانات الجديدة
                         if (cloudData.datesData) {
                             allHistoryData = cloudData.datesData;
                             localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
@@ -2175,11 +2173,9 @@
                             boardTitleEl.textContent = t.boardTitle + ' - ' + cloudData.teacherName;
                         }
 
-                        // تحديث الواجهة تلقائياً
                         ensureAllStudentsInData();
                         refreshUI();
 
-                        // تحديث لوحة المشرف
                         if (isAdminUser()) {
                             setTimeout(function() {
                                 renderAdminVisualCharts();
@@ -2284,7 +2280,7 @@
                 var loaded = false;
                 if (storageMode === 'cloud' && currentUser && isFirebaseInitialized) {
                     loaded = await loadFromFirebase();
-                    // بدء المزامنة التلقائية بعد التحميل
+                    // ===== تعديل: بدء المزامنة التلقائية بعد التحميل =====
                     startAutomaticSync();
                 }
                 if (!loaded) loadDataFromLocalStorage();
@@ -2608,10 +2604,9 @@
                 }
             }
 
-            // ===== دالة تسجيل الخروج (مع إظهار نموذج الدخول) =====
+            // ===== دالة تسجيل الخروج =====
             async function logout() {
                 try {
-                    // إلغاء المستمع التلقائي
                     if (firebaseSyncListener) {
                         firebaseSyncListener.off();
                         firebaseSyncListener = null;
@@ -2640,7 +2635,7 @@
                 }
 
                 let selectedClass = document.getElementById('classSelect').value;
-                // حل مشكلة المزامنة: إذا كان المستخدم مشرفاً ولم يختر فصلاً، يتم تحديد أول فصل متاح تلقائياً
+                // ===== تعديل: اختيار الفصل تلقائياً إذا لم يكن محدداً =====
                 if (!selectedClass && isAdminUser()) {
                     const classSelectEl = document.getElementById('classSelect');
                     if (classSelectEl && classSelectEl.options.length > 0) {
@@ -2659,7 +2654,6 @@
                 const saved = await saveToFirebase();
                 if (saved) {
                     showMessage(t.firebase.syncSuccess, 'success');
-                    // بعد المزامنة، نبدأ الاستماع للتحديثات
                     startAutomaticSync();
                 }
             }
@@ -4803,6 +4797,7 @@
                     }, 100);
                 }
 
+                // ===== تعديل: بعد تعيين المعلم والقسم، تحميل البيانات وبدء المزامنة التلقائية فوراً =====
                 setTimeout(function() {
                     if (currentTeacherId && currentClass) {
                         loadData().then(() => {
