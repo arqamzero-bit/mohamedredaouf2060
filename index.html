@@ -5,229 +5,1259 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام متابعة المعلمين والطلاب - محمد رضا</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js">
+    </script>
     <style>
         /* ===== جميع الأنماط الأصلية (لم تتغير) ===== */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background: #f3f4f6; color: #111; transition: all 0.3s ease; }
-        .firebase-section { background: linear-gradient(135deg, #ff6b6b, #ffa726); color: white; padding: 12px 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 3px 5px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
-        .firebase-section h3 { margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
-        .firebase-section h3 i { font-size: 1.3rem; }
-        .firebase-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-        .firebase-btn { padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; transition: all 0.3s; display: flex; align-items: center; gap: 5px; }
-        .btn-cloud { background: #4285f4; color: white; } .btn-cloud:hover { background: #3367d6; }
-        .btn-local { background: #34a853; color: white; } .btn-local:hover { background: #2e8b47; }
-        .btn-sync { background: #fbbc05; color: #000; } .btn-sync:hover { background: #e6ac00; }
-        .btn-login { background: #ea4335; color: white; } .btn-login:hover { background: #d33426; }
-        .btn-fix-emails { background: #8b5cf6; color: white; } .btn-fix-emails:hover { background: #7c3aed; }
-        .btn-export-excel { background: #059669; color: white; } .btn-export-excel:hover { background: #047857; }
-        .btn-delete-all-users { background: #dc2626; color: white; } .btn-delete-all-users:hover { background: #b91c1c; }
-        .btn-update-subject { background: #8b5cf6; color: white; } .btn-update-subject:hover { background: #7c3aed; }
-        .btn-admin { background: #8b5cf6; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-admin:hover { background: #7c3aed; }
-        .btn-danger { background: #dc2626; color: white; } .btn-danger:hover { background: #b91c1c; }
-        .btn-view-data { background: #6366f1; color: white; } .btn-view-data:hover { background: #4f46e5; }
-        .firebase-status { background: rgba(255, 255, 255, 0.2); padding: 6px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
-        .firebase-status.online { background: rgba(52, 168, 83, 0.3); border-left: 3px solid #34a853; }
-        .firebase-status.offline { background: rgba(234, 67, 53, 0.3); border-left: 3px solid #ea4335; }
-        .firebase-login-form { background: white; padding: 15px; border-radius: 8px; margin-top: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.2); display: none; }
-        .firebase-login-form.show { display: block; }
-        .login-input-group { margin-bottom: 10px; }
-        .login-input-group label { display: block; margin-bottom: 5px; color: #4f46e5; font-weight: bold; font-size: 13px; }
-        .login-input-group input { width: 100%; padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px; }
-        .login-buttons { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
-        .calendar-wrapper { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 3px 5px rgba(0,0,0,0.05); display: none; animation: fadeIn 0.3s ease; position: relative; z-index: 100; }
-        .calendar-wrapper.show { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .calendar-header h3 { font-size: 1.1rem; color: #4f46e5; }
-        .calendar-nav-btn { background: #e0e7ff; border: none; color: #4f46e5; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .calendar-nav-btn:hover { background: #c7d2fe; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-        .calendar-day-name { font-weight: bold; font-size: 12px; color: #6b7280; padding: 5px 0; }
-        .day-cell { padding: 8px 0; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; background: #f9fafb; user-select: none; }
-        .day-cell:hover { background: #e0e7ff; color: #4f46e5; }
-        .day-cell.today { border: 2px solid #818cf8; font-weight: bold; }
-        .day-cell.active { background: #4f46e5; color: white; font-weight: bold; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.4); }
-        .day-cell.empty { background: transparent; cursor: default; }
-        #languageToggle { text-align: center; margin-bottom: 12px; }
-        #languageToggle button { padding: 5px 10px; margin: 0 4px; border-radius: 5px; border: 1px solid #4f46e5; background: white; color: #4f46e5; cursor: pointer; font-weight: bold; font-size: 13px; }
-        #languageToggle button.active { background: #4f46e5; color: white; }
-        .top-section { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; margin-bottom: 15px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 3px 5px rgba(0,0,0,0.05); }
-        .control-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
-        .control-group label { font-weight: bold; color: #4f46e5; font-size: 13px; }
-        select, input[type="text"] { padding: 8px; border-radius: 6px; border: 2px solid #e5e7eb; font-size: 13px; background: white; cursor: pointer; width: 100%; }
-        .btn-add-teacher { background: #059669; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .btn-delete-teacher { background: #dc2626; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .btn-import-teachers { background: #059669; color: white; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px; }
-        .btn-import-teachers:hover { background: #047857; }
-        .teacher-card { display: flex; align-items: center; background: linear-gradient(135deg, #4f46e5, #818cf8); color: white; padding: 15px; border-radius: 10px; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.1); margin-bottom: 20px; animation: fadeInUp 0.5s forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .teacher-icon { font-size: 2rem; background: rgba(255, 255, 255, 0.2); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; }
-        [dir="rtl"] .teacher-icon { margin-left: 15px; } [dir="ltr"] .teacher-icon { margin-right: 15px; }
-        .teacher-info h3 { margin: 0; font-size: 1.2rem; }
-        .teacher-info p { margin: 3px 0 0; opacity: 0.9; font-size: 1rem; }
-        h2 { text-align: center; margin-bottom: 12px; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        .calendar-toggle-btn { background: none; border: none; cursor: pointer; color: #4f46e5; font-size: 1.4rem; transition: transform 0.2s; }
-        .calendar-toggle-btn:hover { transform: scale(1.1); color: #6366f1; }
-        .current-date-display { background: #e0e7ff; color: #4f46e5; padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; }
-        .year-report-btn { background: #6366f1; color: white; border: none; border-radius: 20px; padding: 5px 12px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: all 0.2s; }
-        .year-report-btn:hover { background: #4f46e5; transform: scale(1.05); }
-        .reset-all-btn { background: #dc2626; color: white; border: none; border-radius: 20px; padding: 5px 12px; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: all 0.2s; }
-        .reset-all-btn:hover { background: #b91c1c; transform: scale(1.05); }
-        .btn-add-class { background: #8b5cf6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-add-class:hover { background: #7c3aed; }
-        .btn-delete-class { background: #dc2626; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; }
-        .btn-delete-class:hover { background: #b91c1c; }
-        #controls { text-align: center; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; background: #fff; padding: 12px; border-radius: 8px; border: 1px solid #e5e7eb; }
-        #controls input, #controls select, #controls button { padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 12px; }
-        .btn-add-student { background: #4f46e5; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
-        #importExcelLabel { cursor: pointer; background: #4f46e5; color: white; padding: 6px 10px; border-radius: 6px; display: inline-block; font-size: 12px; }
-        #exportExcel { background: #059669; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
-        #students { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .student-container { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .student { width: 100%; background: #4f46e5; color: white; border-radius: 8px; text-align: center; padding: 12px 8px; cursor: pointer; font-weight: bold; font-size: 14px; transition: transform 0.2s, opacity 0.2s, background-color 0.5s ease; box-shadow: 0 3px 5px rgba(0,0,0,0.1); position: relative; z-index: 1; }
-        .student:hover { transform: translateY(-2px); opacity: 0.95; }
-        .student.selected { border: 2px solid #ffd700; box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); transform: translateY(-2px); }
-        .quick-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; width: 100%; }
-        .quick-controls button { border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 13px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 2px solid white; font-weight: bold; }
-        .quick-controls button:hover { transform: scale(1.1); box-shadow: 0 3px 6px rgba(0,0,0,0.2); }
-        .quick-controls button:active { transform: scale(0.9); box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
-        .btn-participate { background: #22c55e; color: white; }
-        .btn-talk { background: #f59e0b; color: #000; }
-        .btn-no-part { background: #6366f1; color: white; }
-        .btn-behavior { background: #000000; color: white; }
-        .btn-absent { background: #ef4444; color: white; }
-        .btn-lateness { background: #a855f7; color: white; }
-        .btn-reset { background: #3b82f6; color: white; }
-        .btn-book { background: #10b981; color: white; } 
-        .btn-notebook { background: #6366f1; color: white; } 
-        .btn-homework { background: #3b82f6; color: white; } 
-        .btn-delete-student { background: #ef4444; color: white; border-radius: 4px; width: auto; padding: 0 6px; font-size: 11px; } 
-        .btn-edit-student { background: #f59e0b; color: white; border-radius: 4px; width: auto; padding: 0 6px; font-size: 11px; }
-        .table-container { overflow-x: auto; margin: 15px 0; border-radius: 8px; box-shadow: 0 3px 5px rgba(0,0,0,0.1); font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 1200px; }
-        th, td { border: 1px solid #ddd; padding: 6px 5px; text-align: center; font-size: 11px; white-space: nowrap; height: 50px; }
-        th { background: #e0e7ff; font-weight: bold; position: sticky; top: 0; z-index: 10; font-size: 11px; }
-        td { vertical-align: middle; }
-        tr:nth-child(even) { background-color: #f8fafc; }
-        tr:hover { background-color: #f1f5f9; }
-        select { width: 100%; padding: 4px; border-radius: 3px; border: 1px solid #ccc; background: white; font-size: 11px; }
-        .stars { font-size: 13px; margin-bottom: 1px; }
-        .stars-count { display: block; font-size: 10px; color: #666; font-weight: bold; }
-        .status-text-cell { font-size: 11px; padding: 2px !important; border-radius: 4px; transition: background-color 0.3s; }
-        .cell-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 4px; }
-        .action-label { font-size: 10px; font-weight: 800; line-height: 1.2; text-align: center; width: 100%; }
-        .counter-value { font-size: 14px; font-weight: 900; color: #1f2937; background: rgba(255,255,255,0.5); padding: 1px 6px; border-radius: 10px; }
-        .text-gift { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .text-warn { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .text-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .text-info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
-        .text-neutral { background: #f3f4f6; color: #374151; font-weight: normal; }
-        #trophyPopup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); font-size: 150px; opacity: 0; transition: all 0.6s ease; z-index: 9999; pointer-events: none; text-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
-        #trophyPopup.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        .check-cell { cursor: pointer; padding: 6px !important; }
-        .check-cell-content { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
-        .check-icon { font-size: 16px; margin-bottom: 2px; }
-        .check-icon.active { color: #22c55e; }
-        .check-icon.inactive { color: #ef4444; }
-        .check-counter { display: block; font-size: 10px; color: #666; font-weight: bold; background: #f3f4f6; padding: 1px 4px; border-radius: 3px; min-width: 25px; }
-        .table-quick-actions { display: flex; gap: 3px; margin-top: 3px; justify-content: center; flex-wrap: wrap; }
-        .table-quick-actions button { background: #e0e7ff; border: 1px solid #a5b4fc; border-radius: 3px; padding: 2px 6px; font-size: 11px; cursor: pointer; transition: all 0.2s; color: #4f46e5; font-weight: bold; }
-        .table-quick-actions button:hover { background: #c7d2fe; transform: scale(1.05); }
-        .table-counter-btn { background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; font-weight: bold; margin: 1px; }
-        .table-counter-btn:hover { background: #fecaca; }
-        .level-عبقري, .level-Genius { color: #9333ea; font-weight: bold; }
-        .level-موهوب, .level-Talented { color: #2563eb; font-weight: bold; }
-        .level-متفوق, .level-Excellent { color: #059669; font-weight: bold; }
-        .level-ممتاز, .level-VeryGood { color: #16a34a; font-weight: bold; }
-        .level-جيد, .level-Good { color: #ca8a04; font-weight: bold; }
-        .level-منخفض, .level-Low { color: #dc2626; font-weight: bold; }
-        .progress-percentage { font-weight: bold; font-size: 12px; color: #7c3aed; background: #f5f3ff; padding: 4px; border-radius: 4px; }
-        .copyright-footer { text-align: center; margin-top: 20px; padding: 10px; color: #666; font-size: 12px; border-top: 1px solid #e5e7eb; background: white; border-radius: 8px; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; visibility: hidden; opacity: 0; transition: all 0.3s; }
-        .modal-overlay.show { visibility: visible; opacity: 1; }
-        .modal-content { background: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-content h3 { color: #4f46e5; margin-bottom: 15px; text-align: center; }
-        .modal-field { margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-        .modal-field label { width: 120px; font-weight: bold; font-size: 12px; color: #333; }
-        .modal-field input, .modal-field select { flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
-        .modal-field input[type="number"] { -moz-appearance: textfield; }
-        .modal-field input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
-        .modal-buttons { display: flex; justify-content: space-around; margin-top: 20px; }
-        .modal-buttons button { padding: 8px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .modal-save { background: #4f46e5; color: white; }
-        .modal-cancel { background: #9ca3af; color: white; }
-        .admin-only { display: none !important; }
-        .admin-only.show { display: inline-flex !important; }
-        .admin-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 20000; visibility: hidden; opacity: 0; transition: all 0.3s; }
-        .admin-modal-overlay.show { visibility: visible; opacity: 1; }
-        .admin-modal-content { background: white; padding: 20px; border-radius: 12px; max-width: 95%; width: 1400px; max-height: 90vh; overflow-y: auto; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
-        .admin-modal-content h3 { color: #4f46e5; text-align: center; margin-bottom: 15px; }
-        .admin-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; background: #f3f4f6; padding: 10px; border-radius: 8px; }
-        .admin-filters label { font-weight: bold; color: #333; }
-        .admin-filters select, .admin-filters input { padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; }
-        .admin-table-container { overflow-x: auto; max-height: 60vh; border: 1px solid #ddd; border-radius: 6px; }
-        .admin-table-container table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1800px; }
-        .admin-table-container th { background: #4f46e5; color: white; position: sticky; top: 0; z-index: 10; padding: 8px 5px; border: 1px solid #333; text-align: center; }
-        .admin-table-container td { padding: 5px 4px; border: 1px solid #ddd; text-align: center; white-space: nowrap; }
-        .admin-table-container tr:nth-child(even) { background: #f9fafb; }
-        .admin-modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
-        .admin-modal-actions button { padding: 8px 18px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-close-modal { background: #9ca3af; color: white; }
-        .btn-close-modal:hover { background: #6b7280; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 15px;
+            background: #f3f4f6;
+            color: #111;
+            transition: all 0.3s ease;
+        }
+        .firebase-section {
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .firebase-section h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .firebase-section h3 i {
+            font-size: 1.3rem;
+        }
+        .firebase-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .firebase-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-cloud {
+            background: #4285f4;
+            color: white;
+        }
+        .btn-cloud:hover {
+            background: #3367d6;
+        }
+        .btn-local {
+            background: #34a853;
+            color: white;
+        }
+        .btn-local:hover {
+            background: #2e8b47;
+        }
+        .btn-sync {
+            background: #fbbc05;
+            color: #000;
+        }
+        .btn-sync:hover {
+            background: #e6ac00;
+        }
+        .btn-login {
+            background: #ea4335;
+            color: white;
+        }
+        .btn-login:hover {
+            background: #d33426;
+        }
+        .btn-fix-emails {
+            background: #8b5cf6;
+            color: white;
+        }
+        .btn-fix-emails:hover {
+            background: #7c3aed;
+        }
+        .btn-export-excel {
+            background: #059669;
+            color: white;
+        }
+        .btn-export-excel:hover {
+            background: #047857;
+        }
+        .btn-delete-all-users {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-delete-all-users:hover {
+            background: #b91c1c;
+        }
+        .btn-update-subject {
+            background: #8b5cf6;
+            color: white;
+        }
+        .btn-update-subject:hover {
+            background: #7c3aed;
+        }
+        .btn-admin {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-admin:hover {
+            background: #7c3aed;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-view-data {
+            background: #6366f1;
+            color: white;
+        }
+        .btn-view-data:hover {
+            background: #4f46e5;
+        }
+        .firebase-status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .firebase-status.online {
+            background: rgba(52, 168, 83, 0.3);
+            border-left: 3px solid #34a853;
+        }
+        .firebase-status.offline {
+            background: rgba(234, 67, 53, 0.3);
+            border-left: 3px solid #ea4335;
+        }
+        .firebase-login-form {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+        .firebase-login-form.show {
+            display: block;
+        }
+        .login-input-group {
+            margin-bottom: 10px;
+        }
+        .login-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4f46e5;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .login-input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .login-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .calendar-wrapper {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.05);
+            display: none;
+            animation: fadeIn 0.3s ease;
+            position: relative;
+            z-index: 100;
+        }
+        .calendar-wrapper.show {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .calendar-header h3 {
+            font-size: 1.1rem;
+            color: #4f46e5;
+        }
+        .calendar-nav-btn {
+            background: #e0e7ff;
+            border: none;
+            color: #4f46e5;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .calendar-nav-btn:hover {
+            background: #c7d2fe;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+        }
+        .calendar-day-name {
+            font-weight: bold;
+            font-size: 12px;
+            color: #6b7280;
+            padding: 5px 0;
+        }
+        .day-cell {
+            padding: 8px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: #f9fafb;
+            user-select: none;
+        }
+        .day-cell:hover {
+            background: #e0e7ff;
+            color: #4f46e5;
+        }
+        .day-cell.today {
+            border: 2px solid #818cf8;
+            font-weight: bold;
+        }
+        .day-cell.active {
+            background: #4f46e5;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(79, 70, 229, 0.4);
+        }
+        .day-cell.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        /* إزالة أزرار تبديل اللغة لأننا نريد عربي فقط */
+        #languageToggle {
+            display: none;
+        }
+
+        .top-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.05);
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 180px;
+        }
+        .control-group label {
+            font-weight: bold;
+            color: #4f46e5;
+            font-size: 13px;
+        }
+        select,
+        input[type="text"] {
+            padding: 8px;
+            border-radius: 6px;
+            border: 2px solid #e5e7eb;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-add-teacher {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-delete-teacher {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-import-teachers {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-import-teachers:hover {
+            background: #047857;
+        }
+        .teacher-card {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #4f46e5, #818cf8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            animation: fadeInUp 0.5s forwards;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .teacher-icon {
+            font-size: 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-left: 15px;
+        }
+        .teacher-info h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+        .teacher-info p {
+            margin: 3px 0 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .calendar-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #4f46e5;
+            font-size: 1.4rem;
+            transition: transform 0.2s;
+        }
+        .calendar-toggle-btn:hover {
+            transform: scale(1.1);
+            color: #6366f1;
+        }
+        .current-date-display {
+            background: #e0e7ff;
+            color: #4f46e5;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .year-report-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .year-report-btn:hover {
+            background: #4f46e5;
+            transform: scale(1.05);
+        }
+        .reset-all-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .reset-all-btn:hover {
+            background: #b91c1c;
+            transform: scale(1.05);
+        }
+        .btn-add-class {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-add-class:hover {
+            background: #7c3aed;
+        }
+        .btn-delete-class {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-delete-class:hover {
+            background: #b91c1c;
+        }
+        #controls {
+            text-align: center;
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        #controls input,
+        #controls select,
+        #controls button {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+        }
+        .btn-add-student {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #importExcelLabel {
+            cursor: pointer;
+            background: #4f46e5;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            font-size: 12px;
+        }
+        #exportExcel {
+            background: #059669;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #students {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .student-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .student {
+            width: 100%;
+            background: #4f46e5;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            padding: 12px 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: transform 0.2s, opacity 0.2s, background-color 0.5s ease;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        .student:hover {
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+        .student.selected {
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+            transform: translateY(-2px);
+        }
+        .quick-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            width: 100%;
+        }
+        .quick-controls button {
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 2px solid white;
+            font-weight: bold;
+        }
+        .quick-controls button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+        .quick-controls button:active {
+            transform: scale(0.9);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .btn-participate {
+            background: #22c55e;
+            color: white;
+        }
+        .btn-talk {
+            background: #f59e0b;
+            color: #000;
+        }
+        .btn-no-part {
+            background: #6366f1;
+            color: white;
+        }
+        .btn-behavior {
+            background: #000000;
+            color: white;
+        }
+        .btn-absent {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-lateness {
+            background: #a855f7;
+            color: white;
+        }
+        .btn-reset {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-book {
+            background: #10b981;
+            color: white;
+        }
+        .btn-notebook {
+            background: #6366f1;
+            color: white;
+        }
+        .btn-homework {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-delete-student {
+            background: #ef4444;
+            color: white;
+            border-radius: 4px;
+            width: auto;
+            padding: 0 6px;
+            font-size: 11px;
+        }
+        .btn-edit-student {
+            background: #f59e0b;
+            color: white;
+            border-radius: 4px;
+            width: auto;
+            padding: 0 6px;
+            font-size: 11px;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+            font-size: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            min-width: 1200px;
+        }
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 6px 5px;
+            text-align: center;
+            font-size: 11px;
+            white-space: nowrap;
+            height: 50px;
+        }
+        th {
+            background: #e0e7ff;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 11px;
+        }
+        td {
+            vertical-align: middle;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+        select {
+            width: 100%;
+            padding: 4px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            background: white;
+            font-size: 11px;
+        }
+        .stars {
+            font-size: 13px;
+            margin-bottom: 1px;
+        }
+        .stars-count {
+            display: block;
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+        }
+        .status-text-cell {
+            font-size: 11px;
+            padding: 2px !important;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .cell-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 4px;
+        }
+        .action-label {
+            font-size: 10px;
+            font-weight: 800;
+            line-height: 1.2;
+            text-align: center;
+            width: 100%;
+        }
+        .counter-value {
+            font-size: 14px;
+            font-weight: 900;
+            color: #1f2937;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+        .text-gift {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .text-warn {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        .text-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .text-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        .text-neutral {
+            background: #f3f4f6;
+            color: #374151;
+            font-weight: normal;
+        }
+        #trophyPopup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 150px;
+            opacity: 0;
+            transition: all 0.6s ease;
+            z-index: 9999;
+            pointer-events: none;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+        #trophyPopup.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        .check-cell {
+            cursor: pointer;
+            padding: 6px !important;
+        }
+        .check-cell-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .check-icon {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+        .check-icon.active {
+            color: #22c55e;
+        }
+        .check-icon.inactive {
+            color: #ef4444;
+        }
+        .check-counter {
+            display: block;
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+            background: #f3f4f6;
+            padding: 1px 4px;
+            border-radius: 3px;
+            min-width: 25px;
+        }
+        .table-quick-actions {
+            display: flex;
+            gap: 3px;
+            margin-top: 3px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .table-quick-actions button {
+            background: #e0e7ff;
+            border: 1px solid #a5b4fc;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #4f46e5;
+            font-weight: bold;
+        }
+        .table-quick-actions button:hover {
+            background: #c7d2fe;
+            transform: scale(1.05);
+        }
+        .table-counter-btn {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 1px;
+        }
+        .table-counter-btn:hover {
+            background: #fecaca;
+        }
+        .level-عبقري {
+            color: #9333ea;
+            font-weight: bold;
+        }
+        .level-موهوب {
+            color: #2563eb;
+            font-weight: bold;
+        }
+        .level-متفوق {
+            color: #059669;
+            font-weight: bold;
+        }
+        .level-ممتاز {
+            color: #16a34a;
+            font-weight: bold;
+        }
+        .level-جيد {
+            color: #ca8a04;
+            font-weight: bold;
+        }
+        .level-منخفض {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .progress-percentage {
+            font-weight: bold;
+            font-size: 12px;
+            color: #7c3aed;
+            background: #f5f3ff;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .copyright-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .modal-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .modal-content h3 {
+            color: #4f46e5;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .modal-field {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-field label {
+            width: 120px;
+            font-weight: bold;
+            font-size: 12px;
+            color: #333;
+        }
+        .modal-field input,
+        .modal-field select {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .modal-field input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .modal-field input[type="number"]::-webkit-inner-spin-button {
+            opacity: 1;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .modal-save {
+            background: #4f46e5;
+            color: white;
+        }
+        .modal-cancel {
+            background: #9ca3af;
+            color: white;
+        }
+        .admin-only {
+            display: none !important;
+        }
+        .admin-only.show {
+            display: inline-flex !important;
+        }
+        .admin-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20000;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .admin-modal-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .admin-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 95%;
+            width: 1400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+        }
+        .admin-modal-content h3 {
+            color: #4f46e5;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .admin-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: center;
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .admin-filters label {
+            font-weight: bold;
+            color: #333;
+        }
+        .admin-filters select,
+        .admin-filters input {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 13px;
+        }
+        .admin-table-container {
+            overflow-x: auto;
+            max-height: 60vh;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .admin-table-container table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 1800px;
+        }
+        .admin-table-container th {
+            background: #4f46e5;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 8px 5px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        .admin-table-container td {
+            padding: 5px 4px;
+            border: 1px solid #ddd;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .admin-table-container tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        .admin-modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .admin-modal-actions button {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-close-modal {
+            background: #9ca3af;
+            color: white;
+        }
+        .btn-close-modal:hover {
+            background: #6b7280;
+        }
 
         /* أنماط المخططات البيانية */
-        #adminChartsSection { margin-top: 30px; display: none; }
-        #adminChartsSection h3 { text-align: center; margin-bottom: 20px; color: #4f46e5; font-size: 22px; }
-        #adminChartsSection .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; margin-bottom: 20px; }
-        #adminChartsSection .chart-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
-        #adminChartsSection .chart-card h4 { margin-bottom: 15px; color: #374151; font-size: 16px; padding-bottom: 5px; border-bottom: 2px solid #8b5cf6; }
-        #adminChartsSection .chart-card h4 i { margin-left: 8px; }
-        #adminChartsSection .chart-card .chart-wrapper { position: relative; height: 300px; }
+        #adminChartsSection {
+            margin-top: 30px;
+            display: none;
+        }
+        #adminChartsSection h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4f46e5;
+            font-size: 22px;
+        }
+        #adminChartsSection .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+        #adminChartsSection .chart-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+        #adminChartsSection .chart-card h4 {
+            margin-bottom: 15px;
+            color: #374151;
+            font-size: 16px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #8b5cf6;
+        }
+        #adminChartsSection .chart-card h4 i {
+            margin-left: 8px;
+        }
+        #adminChartsSection .chart-card .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
 
-        /* أنماط حاوية عرض البيانات الجديدة */
-        #adminDataContainer { margin-top: 25px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; display: none; }
-        #adminDataContainer h3 { color: #4f46e5; font-size: 18px; }
-        #adminDataContainer .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        #adminDataContainer .stat-card { padding: 15px; border-radius: 8px; }
-        #adminDataContainer .stat-card span { font-size: 12px; font-weight: bold; }
-        #adminDataContainer .stat-card h2 { margin-top: 5px; font-size: 24px; }
-        #adminDataContainer .stat-card.green { background: #f0fdf4; border-left: 4px solid #16a34a; }
-        #adminDataContainer .stat-card.green span { color: #16a34a; }
-        #adminDataContainer .stat-card.green h2 { color: #14532d; }
-        #adminDataContainer .stat-card.red { background: #fef2f2; border-left: 4px solid #dc2626; }
-        #adminDataContainer .stat-card.red span { color: #dc2626; }
-        #adminDataContainer .stat-card.red h2 { color: #7f1d1d; }
-        #adminDataContainer .stat-card.yellow { background: #fffbeb; border-left: 4px solid #d97706; }
-        #adminDataContainer .stat-card.yellow span { color: #d97706; }
-        #adminDataContainer .stat-card.yellow h2 { color: #78350f; }
-        #adminDataContainer .stat-card.blue { background: #eff6ff; border-left: 4px solid #2563eb; }
-        #adminDataContainer .stat-card.blue span { color: #2563eb; }
-        #adminDataContainer .stat-card.blue h2 { color: #1e3a8a; }
+        /* حاوية عرض البيانات الجديدة */
+        #adminDataContainer {
+            margin-top: 25px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            display: none;
+        }
+        #adminDataContainer h3 {
+            color: #4f46e5;
+            font-size: 18px;
+        }
+        #adminDataContainer .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        #adminDataContainer .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+        }
+        #adminDataContainer .stat-card span {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        #adminDataContainer .stat-card h2 {
+            margin-top: 5px;
+            font-size: 24px;
+        }
+        #adminDataContainer .stat-card.green {
+            background: #f0fdf4;
+            border-left: 4px solid #16a34a;
+        }
+        #adminDataContainer .stat-card.green span {
+            color: #16a34a;
+        }
+        #adminDataContainer .stat-card.green h2 {
+            color: #14532d;
+        }
+        #adminDataContainer .stat-card.red {
+            background: #fef2f2;
+            border-left: 4px solid #dc2626;
+        }
+        #adminDataContainer .stat-card.red span {
+            color: #dc2626;
+        }
+        #adminDataContainer .stat-card.red h2 {
+            color: #7f1d1d;
+        }
+        #adminDataContainer .stat-card.yellow {
+            background: #fffbeb;
+            border-left: 4px solid #d97706;
+        }
+        #adminDataContainer .stat-card.yellow span {
+            color: #d97706;
+        }
+        #adminDataContainer .stat-card.yellow h2 {
+            color: #78350f;
+        }
+        #adminDataContainer .stat-card.blue {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+        }
+        #adminDataContainer .stat-card.blue span {
+            color: #2563eb;
+        }
+        #adminDataContainer .stat-card.blue h2 {
+            color: #1e3a8a;
+        }
 
         @media (max-width: 768px) {
-            body { padding: 8px; }
-            #controls, .top-section { flex-direction: column; }
-            #controls input, #controls button, .top-section input, .top-section select, .top-section button { width: 100%; }
-            th, td { padding: 5px 4px; font-size: 10px; }
-            .table-container { border-radius: 6px; }
-            .firebase-section { flex-direction: column; align-items: stretch; }
-            .firebase-controls { justify-content: center; }
-            .day-cell { padding: 5px 0; font-size: 12px; }
-            #adminChartsSection .charts-grid { grid-template-columns: 1fr; }
-            #adminDataContainer .stats-grid { grid-template-columns: 1fr 1fr; }
+            body {
+                padding: 8px;
+            }
+            #controls,
+            .top-section {
+                flex-direction: column;
+            }
+            #controls input,
+            #controls button,
+            .top-section input,
+            .top-section select,
+            .top-section button {
+                width: 100%;
+            }
+            th,
+            td {
+                padding: 5px 4px;
+                font-size: 10px;
+            }
+            .table-container {
+                border-radius: 6px;
+            }
+            .firebase-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .firebase-controls {
+                justify-content: center;
+            }
+            .day-cell {
+                padding: 5px 0;
+                font-size: 12px;
+            }
+            #adminChartsSection .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            #adminDataContainer .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
-        [dir="rtl"] .control-group label, [dir="rtl"] #boardTitle, [dir="rtl"] .copyright-footer { text-align: right; }
-        [dir="ltr"] .control-group label, [dir="ltr"] #boardTitle, [dir="ltr"] .copyright-footer { text-align: left; }
-        [dir="ltr"] .top-section { flex-direction: row; }
-        [dir="ltr"] .student { text-align: center; }
-        [dir="ltr"] table th { text-align: center; }
+        .control-group label,
+        #boardTitle,
+        .copyright-footer {
+            text-align: right;
+        }
     </style>
 </head>
 
@@ -240,7 +1270,7 @@
             <button id="useCloudBtn" class="firebase-btn btn-cloud"><i class="fas fa-cloud"></i> تخزين سحابي</button>
             <button id="syncDataBtn" class="firebase-btn btn-sync"><i class="fas fa-sync-alt"></i> مزامنة</button>
             <button id="loginBtn" class="firebase-btn btn-login"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
-            
+
             <button id="fixEmailsBtn" class="firebase-btn btn-fix-emails admin-only"><i class="fas fa-envelope"></i> تصحيح الأيميلات</button>
             <button id="adminViewBtn" class="btn-admin admin-only"><i class="fas fa-eye"></i> عرض الكل (مشرف)</button>
             <button id="exportAllDataBtn" class="firebase-btn btn-export-excel admin-only"><i class="fas fa-file-excel"></i> تصدير جميع البيانات</button>
@@ -248,7 +1278,7 @@
             <button id="updateSubjectBtn" class="firebase-btn btn-update-subject admin-only"><i class="fas fa-edit"></i> تحديث مواد المعلمين</button>
             <button id="clearAllDataBtn" class="firebase-btn btn-danger admin-only"><i class="fas fa-fire"></i> حذف كل البيانات</button>
             <button id="viewAllDataBtn" class="firebase-btn btn-view-data admin-only"><i class="fas fa-database"></i> عرض جميع البيانات</button>
-            
+
             <div id="firebaseStatus" class="firebase-status offline"><i class="fas fa-wifi"></i> غير متصل</div>
         </div>
     </div>
@@ -264,12 +1294,6 @@
             <button id="cancelLogin" class="firebase-btn btn-login"><i class="fas fa-times"></i> إلغاء</button>
         </div>
         <div id="loginMessage" style="margin-top: 10px; font-size: 12px; color: #333;"></div>
-    </div>
-
-    <!-- ===== أزرار اللغة ===== -->
-    <div id="languageToggle">
-        <button id="switchToAr" class="active">العربية</button>
-        <button id="switchToEn">English</button>
     </div>
 
     <!-- ===== التقويم ===== -->
@@ -387,7 +1411,7 @@
         </div>
     </div>
 
-    <!-- ===== حاوية عرض جميع البيانات (جديدة) ===== -->
+    <!-- ===== حاوية عرض جميع البيانات ===== -->
     <div id="adminDataContainer"></div>
 
     <!-- ===== تذييل الصفحة ===== -->
@@ -551,12 +1575,14 @@
                 { id: 't7', name: "عبدالرحمن الزهراني", subject: "تربية إسلامية", icon: "fa-moon" }
             ];
 
-            var defaultClasses = ['4B', '4D', '5B', '5D', '6B', '6D', '7B', '7D', '8B', '8D', '9B', '9D', '10B', '10D', '11B', '11D', '12B', '12D'];
+            var defaultClasses = ['4B', '4D', '5B', '5D', '6B', '6D', '7B', '7D', '8B', '8D', '9B', '9D', '10B', '10D', '11B',
+                '11D', '12B', '12D'
+            ];
             var CLASSES_STORAGE_KEY = 'classes_list';
 
             // ===== المتغيرات العامة =====
             var classesList = JSON.parse(localStorage.getItem(CLASSES_STORAGE_KEY)) || defaultClasses;
-            var currentLang = localStorage.getItem('dashboard_lang') || 'ar';
+            var currentLang = 'ar'; // دائمًا عربي
             var currentTeacherId = null;
             var currentClass = null;
             var teachersList = JSON.parse(localStorage.getItem('teachers_list')) || defaultTeachers;
@@ -648,46 +1674,40 @@
                 return adminEmails.includes(currentUser.email);
             }
 
-            // ===== دالة فصل الواجهات حسب الصلاحية (التعديل الوحيد) =====
+            // ===== دالة فصل الواجهات حسب الصلاحية =====
             function applyRoleVisibility() {
                 var isAdmin = isAdminUser && isAdminUser();
 
-                // عناصر المتابعة اليومية (يتم إخفاؤها للمشرف)
                 var teacherElements = [
                     document.getElementById('teacherCardContainer'),
                     document.getElementById('students'),
                     document.getElementById('controls'),
                     document.getElementById('tableContainer')
                 ];
-                // القسم العلوي يبقى ظاهراً لإدارة المعلمين، مع إخفاء قسم اختيار القسم
                 var classSelectSection = document.getElementById('classSelectSection');
                 var chartsSection = document.getElementById('adminChartsSection');
 
                 if (isAdmin) {
-                    // إخفاء عناصر المتابعة
                     teacherElements.forEach(function(el) { if (el) el.style.display = 'none'; });
-                    // إخفاء اختيار القسم من القسم العلوي
                     if (classSelectSection) classSelectSection.style.display = 'none';
-                    // إظهار المخططات
                     if (chartsSection) chartsSection.style.display = 'block';
-                    // إظهار أزرار المشرف
                     document.querySelectorAll('.admin-only').forEach(function(btn) {
                         btn.classList.add('show');
                     });
-                    // رسم المخططات بعد قليل
                     setTimeout(function() {
                         renderAdminVisualCharts();
                     }, 300);
                 } else {
-                    // إظهار كل العناصر للمستخدم العادي
                     teacherElements.forEach(function(el) { if (el) el.style.display = ''; });
                     if (classSelectSection) classSelectSection.style.display = '';
                     if (chartsSection) chartsSection.style.display = 'none';
                     document.querySelectorAll('.admin-only').forEach(function(btn) {
                         btn.classList.remove('show');
                     });
-                    if (teacherChartInstance) { teacherChartInstance.destroy(); teacherChartInstance = null; }
-                    if (schoolChartInstance) { schoolChartInstance.destroy(); schoolChartInstance = null; }
+                    if (teacherChartInstance) { teacherChartInstance.destroy();
+                        teacherChartInstance = null; }
+                    if (schoolChartInstance) { schoolChartInstance.destroy();
+                        schoolChartInstance = null; }
                     var dataContainer = document.getElementById('adminDataContainer');
                     if (dataContainer) dataContainer.style.display = 'none';
                 }
@@ -706,17 +1726,22 @@
                     var ctxPie = document.getElementById('schoolPieChart');
                     if (ctxBar) {
                         var parent = ctxBar.parentElement;
-                        parent.innerHTML = '<div style="text-align:center;padding:40px 0;color:#999;">⚠️ لا توجد بيانات كافية لعرض المخططات</div>';
+                        parent.innerHTML =
+                        '<div style="text-align:center;padding:40px 0;color:#999;">⚠️ لا توجد بيانات كافية لعرض المخططات</div>';
                     }
                     if (ctxPie) {
                         var parent2 = ctxPie.parentElement;
-                        parent2.innerHTML = '<div style="text-align:center;padding:40px 0;color:#999;">⚠️ لا توجد بيانات كافية لعرض المخططات</div>';
+                        parent2.innerHTML =
+                            '<div style="text-align:center;padding:40px 0;color:#999;">⚠️ لا توجد بيانات كافية لعرض المخططات</div>';
                     }
                     return;
                 }
 
                 var teacherStats = {};
-                var totalP = 0, totalA = 0, totalB = 0, totalT = 0;
+                var totalP = 0,
+                    totalA = 0,
+                    totalB = 0,
+                    totalT = 0;
 
                 results.forEach(function(r) {
                     totalP += (r.participation || 0);
@@ -790,7 +1815,9 @@
                 schoolChartInstance = new Chart(ctxPie2d, {
                     type: 'doughnut',
                     data: {
-                        labels: ['إجمالي المشاركات الفعالة', 'حالات الغياب المرصودة', 'مخالفات السلوك السلبي', 'التحدث بدون إذن'],
+                        labels: ['إجمالي المشاركات الفعالة', 'حالات الغياب المرصودة', 'مخالفات السلوك السلبي',
+                            'التحدث بدون إذن'
+                        ],
                         datasets: [{
                             data: [totalP, totalA, totalB, totalT],
                             backgroundColor: [
@@ -807,7 +1834,8 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 }, padding: 15 } },
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 },
+                                    padding: 15 } },
                             tooltip: { backgroundColor: '#1f2937', padding: 10 }
                         },
                         cutout: '65%'
@@ -840,7 +1868,8 @@
                 type = type || 'info';
                 var messageDiv = document.createElement('div');
                 messageDiv.textContent = message;
-                messageDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; font-weight: bold; z-index: 10000; box-shadow: 0 3px 10px rgba(0,0,0,0.2); max-width: 400px;';
+                messageDiv.style.cssText =
+                    'position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; font-weight: bold; z-index: 10000; box-shadow: 0 3px 10px rgba(0,0,0,0.2); max-width: 400px;';
                 if (type === 'success') messageDiv.style.background = '#34a853';
                 else if (type === 'error') messageDiv.style.background = '#ea4335';
                 else if (type === 'warning') messageDiv.style.background = '#d97706';
@@ -926,145 +1955,78 @@
                 }
             }
 
-            // ===== الترجمة =====
-            var translations = {
-                ar: {
-                    boardTitle: "📋 لوحة متابعة المعلم",
-                    deleteTeacher: "حذف المعلم 🗑️",
-                    deleteStudent: "حذف الطالب 🗑️",
-                    deleteAllTeachers: "💥 حذف الكل",
-                    importTeachersLabel: "<i class='fas fa-file-excel'></i> تحميل معلمين",
-                    confirmDeleteTeacher: "هل أنت متأكد من حذف المعلم الحالي؟",
-                    confirmDeleteStudent: function(name) { return 'هل أنت متأكد من حذف الطالب: ' + name + '؟'; },
-                    confirmDeleteAllTeachers: "هل أنت متأكد من حذف جميع المعلمين؟",
-                    errorSelectTeacher: "الرجاء اختيار معلم أولاً",
-                    errorSelectClass: "الرجاء اختيار القسم أولاً",
-                    studentAdded: "تمت إضافة الطالب بنجاح",
-                    teacherDeleted: "تم حذف المعلم بنجاح",
-                    studentDeleted: "تم حذف الطالب بنجاح",
-                    allTeachersDeleted: "تم حذف جميع المعلمين بنجاح",
-                    newTeacherPlaceholder: "اسم المعلم...",
-                    newStudentPlaceholder: "أضف طالباً يدوياً...",
-                    resetAllConfirm: "هل أنت متأكد من إعادة جميع العدادات للصفر؟",
-                    resetAllSuccess: "تم تصفير جميع العدادات",
-                    resetConfirm: function(name) { return 'هل تريد إعادة جميع عدادات ' + name + ' للصفر؟'; },
-                    msgParticipate: "مشاركة جيدة 👋",
-                    msgTalk: "يتحدث بالحصة 🗣️",
-                    msgNotParticipate: "لا يشارك 😴",
-                    msgBehavior: "سلوك ⚫",
-                    msgLateness: "تأخر عن الحصة ⏰",
-                    msgAbsent: "غياب ❌",
-                    msgResetState: "تم إعادة الحالة 🔄",
-                    msgResetCounters: "تم إعادة جميع العدادات 📊",
-                    attendanceText: ["حضور", "غياب"],
-                    states: [
-                        { color: "#7c3aed", label: "نقاط الطالب", stars: 5 },
-                        { color: "#22c55e", label: "مشاركة جيدة", stars: 5 },
-                        { color: "#f59e0b", label: "يتحدث بالحصة", stars: 3 },
-                        { color: "#6366f1", label: "لا يشارك", stars: 2 },
-                        { color: "#000000", label: "سلوك", stars: 1 },
-                        { color: "#ef4444", label: "غياب", stars: 0 }
-                    ],
-                    levels: ["منخفض", "جيد", "ممتاز", "متفوق", "موهوب", "عبقري"],
-                    notesOptions: ["", "يقوم من مكانه", "يرمي ورق", "لا يكتب", "يأكل بالفصل", "يتحدث كثيراً", "يتنمر", "يحتاج متابعة", "ممتاز", "أخرى"],
-                    notBringingBook: "عدم إحضار الكتاب 📗",
-                    notBringingNotebook: "عدم إحضار الدفتر 📒",
-                    notDoingHomework: "عدم عمل الواجب 📘",
-                    quickActions: {
-                        participate: "مشاركة جيدة 👋",
-                        talk: "يتحدث بالحصة 🗣️",
-                        notParticipating: "لا يشارك 😴",
-                        behavior: "سلوك ⚫",
-                        lateness: "تأخر ⏰",
-                        absent: "غياب ❌",
-                        resetState: "إعادة الحالة 🔄",
-                        resetCounters: "إعادة جميع العدادات 📊"
-                    },
-                    firebase: {
-                        online: "متصل بالسحابة ☁️",
-                        offline: "تخزين محلي 💾",
-                        syncSuccess: "تمت المزامنة بنجاح",
-                        syncError: "خطأ في المزامنة",
-                        loginSuccess: "تم تسجيل الدخول",
-                        logoutSuccess: "تم تسجيل الخروج",
-                        registerSuccess: "تم إنشاء الحساب",
-                        authError: "خطأ في المصادقة",
-                        storageLocal: "التخزين المحلي مفعل",
-                        storageCloud: "التخزين السحابي مفعل"
-                    },
-                    calendar: {
-                        days: ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"],
-                        months: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
-                    }
+            // ===== الترجمة العربية فقط =====
+            var t = {
+                boardTitle: "📋 لوحة متابعة المعلم",
+                deleteTeacher: "حذف المعلم 🗑️",
+                deleteStudent: "حذف الطالب 🗑️",
+                deleteAllTeachers: "💥 حذف الكل",
+                importTeachersLabel: "<i class='fas fa-file-excel'></i> تحميل معلمين",
+                confirmDeleteTeacher: "هل أنت متأكد من حذف المعلم الحالي؟",
+                confirmDeleteStudent: function(name) { return 'هل أنت متأكد من حذف الطالب: ' + name + '؟'; },
+                confirmDeleteAllTeachers: "هل أنت متأكد من حذف جميع المعلمين؟",
+                errorSelectTeacher: "الرجاء اختيار معلم أولاً",
+                errorSelectClass: "الرجاء اختيار القسم أولاً",
+                studentAdded: "تمت إضافة الطالب بنجاح",
+                teacherDeleted: "تم حذف المعلم بنجاح",
+                studentDeleted: "تم حذف الطالب بنجاح",
+                allTeachersDeleted: "تم حذف جميع المعلمين بنجاح",
+                newTeacherPlaceholder: "اسم المعلم...",
+                newStudentPlaceholder: "أضف طالباً يدوياً...",
+                resetAllConfirm: "هل أنت متأكد من إعادة جميع العدادات للصفر؟",
+                resetAllSuccess: "تم تصفير جميع العدادات",
+                resetConfirm: function(name) { return 'هل تريد إعادة جميع عدادات ' + name + ' للصفر؟'; },
+                msgParticipate: "مشاركة جيدة 👋",
+                msgTalk: "يتحدث بالحصة 🗣️",
+                msgNotParticipate: "لا يشارك 😴",
+                msgBehavior: "سلوك ⚫",
+                msgLateness: "تأخر عن الحصة ⏰",
+                msgAbsent: "غياب ❌",
+                msgResetState: "تم إعادة الحالة 🔄",
+                msgResetCounters: "تم إعادة جميع العدادات 📊",
+                attendanceText: ["حضور", "غياب"],
+                states: [
+                    { color: "#7c3aed", label: "نقاط الطالب", stars: 5 },
+                    { color: "#22c55e", label: "مشاركة جيدة", stars: 5 },
+                    { color: "#f59e0b", label: "يتحدث بالحصة", stars: 3 },
+                    { color: "#6366f1", label: "لا يشارك", stars: 2 },
+                    { color: "#000000", label: "سلوك", stars: 1 },
+                    { color: "#ef4444", label: "غياب", stars: 0 }
+                ],
+                levels: ["منخفض", "جيد", "ممتاز", "متفوق", "موهوب", "عبقري"],
+                notesOptions: ["", "يقوم من مكانه", "يرمي ورق", "لا يكتب", "يأكل بالفصل", "يتحدث كثيراً", "يتنمر",
+                    "يحتاج متابعة", "ممتاز", "أخرى"
+                ],
+                notBringingBook: "عدم إحضار الكتاب 📗",
+                notBringingNotebook: "عدم إحضار الدفتر 📒",
+                notDoingHomework: "عدم عمل الواجب 📘",
+                quickActions: {
+                    participate: "مشاركة جيدة 👋",
+                    talk: "يتحدث بالحصة 🗣️",
+                    notParticipating: "لا يشارك 😴",
+                    behavior: "سلوك ⚫",
+                    lateness: "تأخر ⏰",
+                    absent: "غياب ❌",
+                    resetState: "إعادة الحالة 🔄",
+                    resetCounters: "إعادة جميع العدادات 📊"
                 },
-                en: {
-                    boardTitle: "📋 Teacher Tracking Dashboard",
-                    deleteTeacher: "Delete Teacher 🗑️",
-                    deleteStudent: "Delete Student 🗑️",
-                    deleteAllTeachers: "💥 Delete All",
-                    importTeachersLabel: "<i class='fas fa-file-excel'></i> Import Teachers",
-                    confirmDeleteTeacher: "Are you sure you want to delete this teacher?",
-                    confirmDeleteStudent: function(name) { return 'Are you sure you want to delete student: ' + name + '?'; },
-                    confirmDeleteAllTeachers: "Are you sure you want to delete all teachers?",
-                    errorSelectTeacher: "Please select a teacher first",
-                    errorSelectClass: "Please select a class first",
-                    studentAdded: "Student added successfully",
-                    teacherDeleted: "Teacher deleted successfully",
-                    studentDeleted: "Student deleted successfully",
-                    allTeachersDeleted: "All teachers deleted successfully",
-                    newTeacherPlaceholder: "Teacher name...",
-                    newStudentPlaceholder: "Add student manually...",
-                    resetAllConfirm: "Are you sure you want to reset all counters?",
-                    resetAllSuccess: "All counters reset successfully",
-                    resetConfirm: function(name) { return 'Reset all counters for ' + name + '?'; },
-                    msgParticipate: "Good Participation 👋",
-                    msgTalk: "Talking in Class 🗣️",
-                    msgNotParticipate: "Not Participating 😴",
-                    msgBehavior: "Behavior ⚫",
-                    msgLateness: "Lateness ⏰",
-                    msgAbsent: "Absence ❌",
-                    msgResetState: "Status Reset 🔄",
-                    msgResetCounters: "Counters Reset 📊",
-                    attendanceText: ["Present", "Absent"],
-                    states: [
-                        { color: "#7c3aed", label: "Student Points", stars: 5 },
-                        { color: "#22c55e", label: "Good Participation", stars: 5 },
-                        { color: "#f59e0b", label: "Talking in Class", stars: 3 },
-                        { color: "#6366f1", label: "Not Participating", stars: 2 },
-                        { color: "#000000", label: "Behavior", stars: 1 },
-                        { color: "#ef4444", label: "Absence", stars: 0 }
-                    ],
-                    levels: ["Low", "Good", "Very Good", "Excellent", "Talented", "Genius"],
-                    notesOptions: ["", "Leaves seat", "Throws paper", "Doesn't write", "Eats in class", "Talks too much", "Bullies", "Needs monitoring", "Excellent", "Other"],
-                    notBringingBook: "Not bringing book 📗",
-                    notBringingNotebook: "Not bringing notebook 📒",
-                    notDoingHomework: "Not doing homework 📘",
-                    quickActions: {
-                        participate: "Good Participation 👋",
-                        talk: "Talking in Class 🗣️",
-                        notParticipating: "Not Participating 😴",
-                        behavior: "Behavior ⚫",
-                        lateness: "Lateness ⏰",
-                        absent: "Absence ❌",
-                        resetState: "Reset State 🔄",
-                        resetCounters: "Reset all counters 📊"
-                    },
-                    firebase: {
-                        online: "Connected to Cloud ☁️",
-                        offline: "Local Storage 💾",
-                        syncSuccess: "Successfully synced",
-                        syncError: "Sync error",
-                        loginSuccess: "Login successful",
-                        logoutSuccess: "Logout successful",
-                        registerSuccess: "Account created",
-                        authError: "Auth error",
-                        storageLocal: "Local storage active",
-                        storageCloud: "Cloud storage active"
-                    },
-                    calendar: {
-                        days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-                        months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-                    }
+                firebase: {
+                    online: "متصل بالسحابة ☁️",
+                    offline: "تخزين محلي 💾",
+                    syncSuccess: "تمت المزامنة بنجاح",
+                    syncError: "خطأ في المزامنة",
+                    loginSuccess: "تم تسجيل الدخول",
+                    logoutSuccess: "تم تسجيل الخروج",
+                    registerSuccess: "تم إنشاء الحساب",
+                    authError: "خطأ في المصادقة",
+                    storageLocal: "التخزين المحلي مفعل",
+                    storageCloud: "التخزين السحابي مفعل"
+                },
+                calendar: {
+                    days: ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"],
+                    months: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر",
+                        "نوفمبر", "ديسمبر"
+                    ]
                 }
             };
 
@@ -1083,6 +2045,7 @@
             }
 
             function arabicToEnglishTransliteration(arabicName) {
+                // تحويل اسم عربي إلى إنكليزي (للاستخدام الداخلي في بعض الحالات)
                 if (!arabicName || arabicName.trim() === '') return arabicName;
                 var trimmedName = arabicName.trim();
                 var hasArabic = /[\u0600-\u06FF]/.test(trimmedName);
@@ -1093,8 +2056,14 @@
                     part = part.trim();
                     if (!part) return '';
                     if (!/[\u0600-\u06FF]/.test(part)) return part;
-                    var charMap = { 'ا': 'a', 'أ': 'a', 'إ': 'e', 'آ': 'aa', 'ء': '', 'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w', 'ؤ': 'w', 'ي': 'y', 'ى': 'a', 'ئ': 'e', 'ة': 'h' };
-                    var specialWords = { 'عبدالله': 'Abdullah', 'عبد الله': 'Abdullah', 'عبدالرحمن': 'Abdulrahman', 'عبد الرحمن': 'Abdulrahman' };
+                    var charMap = { 'ا': 'a', 'أ': 'a', 'إ': 'e', 'آ': 'aa', 'ء': '', 'ب': 'b', 'ت': 't', 'ث': 'th',
+                        'ج': 'j', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh',
+                        'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k',
+                        'ل': 'l', 'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w', 'ؤ': 'w', 'ي': 'y', 'ى': 'a', 'ئ': 'e',
+                        'ة': 'h'
+                    };
+                    var specialWords = { 'عبدالله': 'Abdullah', 'عبد الله': 'Abdullah', 'عبدالرحمن': 'Abdulrahman',
+                        'عبد الرحمن': 'Abdulrahman' };
                     if (specialWords[part]) return specialWords[part];
                     if (part.startsWith('ال') && part.length > 2) {
                         var withoutAl = part.substring(2);
@@ -1145,48 +2114,49 @@
                 var text = "";
                 var styleClass = "text-neutral";
                 if (type === 'participation') {
-                    if (count >= 15) { text = "🏆 وسام نجم الأسبوع"; styleClass = "text-gift"; }
-                    else if (count >= 12) { text = "🎁 اختيار سؤال"; styleClass = "text-gift"; }
-                    else if (count >= 9) { text = "👑 قائد الحصة"; styleClass = "text-gift"; }
-                    else if (count >= 6) { text = "🏅 اختيار لعبة"; styleClass = "text-gift"; }
-                    else if (count >= 3) { text = "⭐ نقطة بطل"; styleClass = "text-gift"; }
-                    else { text = "نشاط"; styleClass = "text-neutral"; }
-                }
-                else if (type === 'talking') {
-                    if (count >= 8) { text = "🔴 متابعة إدارية"; styleClass = "text-danger"; }
-                    else if (count >= 6) { text = "📝 كتابة تعهد"; styleClass = "text-danger"; }
-                    else if (count >= 4) { text = "🔁 تغيير مكان"; styleClass = "text-warn"; }
-                    else if (count >= 2) { text = "⚠ تنبيه شفهي"; styleClass = "text-warn"; }
-                    else { text = "تحدث"; styleClass = "text-neutral"; }
-                }
-                else if (type === 'absence') {
-                    if (count === 0) { text = "⭐ نجم الانضباط"; styleClass = "text-gift"; }
-                    else if (count >= 7) { text = "متابعة إدارية"; styleClass = "text-danger"; }
-                    else if (count >= 5) { text = "إشعار ولي الأمر"; styleClass = "text-danger"; }
-                    else if (count >= 3) { text = "ملاحظة"; styleClass = "text-warn"; }
-                    else if (count >= 1) { text = "تنبيه"; styleClass = "text-warn"; }
-                    else { text = "حضور"; styleClass = "text-neutral"; }
-                }
-                else if (['book', 'notebook', 'homework'].includes(type)) {
-                    if (count >= 8) { text = "متابعة إدارية"; styleClass = "text-danger"; }
-                    else if (count >= 6) { text = "إشعار ولي الأمر"; styleClass = "text-danger"; }
-                    else if (count >= 4) { text = "ملاحظة"; styleClass = "text-warn"; }
-                    else if (count >= 2) { text = "تنبيه"; styleClass = "text-warn"; }
-                    else { text = "جاهز"; styleClass = "text-gift"; }
-                }
-                else if (type === 'lateness') {
-                    if (count >= 5) { text = "🔴 حرمان من الحصة"; styleClass = "text-danger"; }
-                    else if (count >= 3) { text = "📞 إشعار ولي أمر"; styleClass = "text-warn"; }
-                    else if (count >= 1) { text = "⏰ ملاحظة تأخير"; styleClass = "text-warn"; }
-                    else { text = "في الوقت"; styleClass = "text-gift"; }
-                }
-                else if (type === 'behavior') {
-                    if (count >= 12) { text = "🔴 تحويل للإدارة"; styleClass = "text-danger"; }
-                    else if (count >= 9) { text = "📞 إشعار ولي الأمر"; styleClass = "text-danger"; }
-                    else if (count >= 7) { text = "📝 كتابة اعتذار"; styleClass = "text-warn"; }
-                    else if (count >= 5) { text = "تغيير مكان"; styleClass = "text-warn"; }
-                    else if (count >= 3) { text = "تنبيه"; styleClass = "text-warn"; }
-                    else { text = "سلوك"; styleClass = "text-neutral"; }
+                    if (count >= 15) { text = "🏆 وسام نجم الأسبوع";
+                        styleClass = "text-gift"; } else if (count >= 12) { text = "🎁 اختيار سؤال";
+                        styleClass = "text-gift"; } else if (count >= 9) { text = "👑 قائد الحصة";
+                        styleClass = "text-gift"; } else if (count >= 6) { text = "🏅 اختيار لعبة";
+                        styleClass = "text-gift"; } else if (count >= 3) { text = "⭐ نقطة بطل";
+                        styleClass = "text-gift"; } else { text = "نشاط";
+                        styleClass = "text-neutral"; }
+                } else if (type === 'talking') {
+                    if (count >= 8) { text = "🔴 متابعة إدارية";
+                        styleClass = "text-danger"; } else if (count >= 6) { text = "📝 كتابة تعهد";
+                        styleClass = "text-danger"; } else if (count >= 4) { text = "🔁 تغيير مكان";
+                        styleClass = "text-warn"; } else if (count >= 2) { text = "⚠ تنبيه شفهي";
+                        styleClass = "text-warn"; } else { text = "تحدث";
+                        styleClass = "text-neutral"; }
+                } else if (type === 'absence') {
+                    if (count === 0) { text = "⭐ نجم الانضباط";
+                        styleClass = "text-gift"; } else if (count >= 7) { text = "متابعة إدارية";
+                        styleClass = "text-danger"; } else if (count >= 5) { text = "إشعار ولي الأمر";
+                        styleClass = "text-danger"; } else if (count >= 3) { text = "ملاحظة";
+                        styleClass = "text-warn"; } else if (count >= 1) { text = "تنبيه";
+                        styleClass = "text-warn"; } else { text = "حضور";
+                        styleClass = "text-neutral"; }
+                } else if (['book', 'notebook', 'homework'].includes(type)) {
+                    if (count >= 8) { text = "متابعة إدارية";
+                        styleClass = "text-danger"; } else if (count >= 6) { text = "إشعار ولي الأمر";
+                        styleClass = "text-danger"; } else if (count >= 4) { text = "ملاحظة";
+                        styleClass = "text-warn"; } else if (count >= 2) { text = "تنبيه";
+                        styleClass = "text-warn"; } else { text = "جاهز";
+                        styleClass = "text-gift"; }
+                } else if (type === 'lateness') {
+                    if (count >= 5) { text = "🔴 حرمان من الحصة";
+                        styleClass = "text-danger"; } else if (count >= 3) { text = "📞 إشعار ولي أمر";
+                        styleClass = "text-warn"; } else if (count >= 1) { text = "⏰ ملاحظة تأخير";
+                        styleClass = "text-warn"; } else { text = "في الوقت";
+                        styleClass = "text-gift"; }
+                } else if (type === 'behavior') {
+                    if (count >= 12) { text = "🔴 تحويل للإدارة";
+                        styleClass = "text-danger"; } else if (count >= 9) { text = "📞 إشعار ولي الأمر";
+                        styleClass = "text-danger"; } else if (count >= 7) { text = "📝 كتابة اعتذار";
+                        styleClass = "text-warn"; } else if (count >= 5) { text = "تغيير مكان";
+                        styleClass = "text-warn"; } else if (count >= 3) { text = "تنبيه";
+                        styleClass = "text-warn"; } else { text = "سلوك";
+                        styleClass = "text-neutral"; }
                 }
                 return { text: text, class: styleClass, count: count };
             }
@@ -1214,8 +2184,8 @@
             // ===== دوال التقويم =====
             function renderCalendar() {
                 calendarGrid.innerHTML = "";
-                var t = translations[currentLang].calendar;
-                t.days.forEach(function(day) {
+                var cal = t.calendar;
+                cal.days.forEach(function(day) {
                     var dayHeader = document.createElement("div");
                     dayHeader.className = "calendar-day-name";
                     dayHeader.textContent = day;
@@ -1223,7 +2193,7 @@
                 });
                 var year = calendarDate.getFullYear();
                 var month = calendarDate.getMonth();
-                calendarTitle.textContent = t.months[month] + ' ' + year;
+                calendarTitle.textContent = cal.months[month] + ' ' + year;
                 var firstDayIndex = new Date(year, month, 1).getDay();
                 var lastDay = new Date(year, month + 1, 0).getDate();
                 var selectedStr = formattedSelectedDate();
@@ -1238,13 +2208,14 @@
                     dayCell.textContent = j;
                     var cellDateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(j).padStart(2, '0');
                     var now = new Date();
-                    var nowStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+                    var nowStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now
+                        .getDate()).padStart(2, '0');
                     if (cellDateStr === nowStr) dayCell.classList.add("today");
                     if (cellDateStr === selectedStr) dayCell.classList.add("active");
                     dayCell.addEventListener("click", (function(year, month, j) {
                         return function() {
                             if (!currentTeacherId || !currentClass) {
-                                showMessage(currentLang === 'ar' ? "الرجاء اختيار المعلم والقسم أولاً" : "Please select teacher and class first", 'error');
+                                showMessage("الرجاء اختيار المعلم والقسم أولاً", 'error');
                                 return;
                             }
                             var oldDateKey = formattedSelectedDate();
@@ -1253,10 +2224,10 @@
                             var newDateKey = formattedSelectedDate();
                             if (allHistoryData[newDateKey]) {
                                 data = allHistoryData[newDateKey];
-                                showMessage((currentLang === 'ar' ? 'تم تحميل بيانات: ' : 'Loaded data: ') + newDateKey, 'info');
+                                showMessage('تم تحميل بيانات: ' + newDateKey, 'info');
                             } else {
                                 data = {};
-                                showMessage((currentLang === 'ar' ? 'يوم جديد: ' : 'New Day: ') + newDateKey + (currentLang === 'ar' ? ' (تم تصفير البيانات)' : ' (Data reset to 0)'), 'info');
+                                showMessage('يوم جديد: ' + newDateKey + ' (تم تصفير البيانات)', 'info');
                             }
                             ensureAllStudentsInData();
                             localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
@@ -1273,13 +2244,11 @@
 
             // ===== دوال Firebase =====
             function updateFirebaseUI() {
-                var t = translations[currentLang];
-
                 if (currentUser) {
                     var email = currentUser.email || t.firebase.offline;
                     firebaseStatus.innerHTML = '<i class="fas fa-user"></i> ' + email.substring(0, 20);
                     firebaseStatus.className = 'firebase-status online';
-                    loginBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> ' + (currentLang === 'ar' ? 'تسجيل الخروج' : 'Logout');
+                    loginBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> تسجيل الخروج';
 
                     if (isAdminUser()) {
                         document.querySelectorAll('.admin-only').forEach(function(btn) {
@@ -1293,7 +2262,7 @@
                 } else {
                     firebaseStatus.innerHTML = '<i class="fas fa-wifi"></i> ' + t.firebase.offline;
                     firebaseStatus.className = 'firebase-status offline';
-                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ' + (currentLang === 'ar' ? 'تسجيل الدخول' : 'Login');
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> تسجيل الدخول';
                     document.querySelectorAll('.admin-only').forEach(function(btn) {
                         btn.classList.remove('show');
                     });
@@ -1318,7 +2287,6 @@
             function setStorageMode(mode) {
                 storageMode = mode;
                 localStorage.setItem('storage_mode', mode);
-                var t = translations[currentLang];
                 if (mode === 'cloud' && !currentUser) {
                     showMessage(t.firebase.authError, 'error');
                     showLoginForm();
@@ -1526,7 +2494,7 @@
                 try {
                     await firebaseAuth.signOut();
                     currentUser = null;
-                    showMessage(translations[currentLang].firebase.logoutSuccess, 'success');
+                    showMessage(t.firebase.logoutSuccess, 'success');
                     updateFirebaseUI();
                     applyRoleVisibility();
                     allHistoryData = {};
@@ -1535,8 +2503,10 @@
                     studentNames = [];
                     initStudentsUI();
                     updateTable();
-                    if (teacherChartInstance) { teacherChartInstance.destroy(); teacherChartInstance = null; }
-                    if (schoolChartInstance) { schoolChartInstance.destroy(); schoolChartInstance = null; }
+                    if (teacherChartInstance) { teacherChartInstance.destroy();
+                        teacherChartInstance = null; }
+                    if (schoolChartInstance) { schoolChartInstance.destroy();
+                        schoolChartInstance = null; }
                     var dataContainer = document.getElementById('adminDataContainer');
                     if (dataContainer) dataContainer.style.display = 'none';
                 } catch (error) {
@@ -1550,7 +2520,6 @@
                     showMessage("يجب تفعيل وضع السحابة وتسجيل الدخول أولاً", 'error');
                     return;
                 }
-                var t = translations[currentLang];
                 var saved = await saveAll(true);
                 if (saved) showMessage(t.firebase.syncSuccess, 'success');
             }
@@ -1602,7 +2571,9 @@
                 var teacher = teachersList.find(function(t) { return t.id === teacherId; });
                 if (!teacher) return;
                 var iconClass = teacher.icon || getSubjectIcon(teacher.subject);
-                teacherCardContainer.innerHTML = '<div class="teacher-card"><div class="teacher-icon"><i class="fa-solid ' + iconClass + '"></i></div><div class="teacher-info"><h3>' + teacher.name + '</h3><p>التخصص: ' + teacher.subject + '</p></div></div>';
+                teacherCardContainer.innerHTML = '<div class="teacher-card"><div class="teacher-icon"><i class="fa-solid ' +
+                    iconClass + '"></i></div><div class="teacher-info"><h3>' + teacher.name +
+                    '</h3><p>التخصص: ' + teacher.subject + '</p></div></div>';
                 if (currentClass) loadData();
             }
 
@@ -1623,7 +2594,6 @@
                 if (!loaded) loadDataFromLocalStorage();
                 updateDisplayNames();
                 ensureAllStudentsInData();
-                applyLanguage(currentLang);
                 updateDateDisplay();
                 initStudentsUI();
                 updateTable();
@@ -1637,7 +2607,8 @@
                 allHistoryData = JSON.parse(localStorage.getItem(STORAGE_KEY_DATA())) || {};
                 originalStudentNames = JSON.parse(localStorage.getItem(STORAGE_KEY_ORIGINAL_NAMES())) || [];
                 if (originalStudentNames.length === 0) {
-                    var oldNames = JSON.parse(localStorage.getItem('tracking_names_' + currentTeacherId + '_' + currentClass)) || [];
+                    var oldNames = JSON.parse(localStorage.getItem('tracking_names_' + currentTeacherId + '_' +
+                    currentClass)) || [];
                     originalStudentNames = oldNames.slice();
                     localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
                 }
@@ -1649,8 +2620,8 @@
                     studentNames = [];
                     return;
                 }
-                if (currentLang === 'en') studentNames = arabicToEnglishNames(originalStudentNames);
-                else studentNames = originalStudentNames.slice();
+                // نعرض الأسماء بالعربية فقط
+                studentNames = originalStudentNames.slice();
             }
 
             function updateDateDisplay() {
@@ -1691,7 +2662,7 @@
                     return true;
                 } catch (error) {
                     console.error("❌ Error saving to Firebase:", error);
-                    showMessage(translations[currentLang].firebase.syncError, 'error');
+                    showMessage(t.firebase.syncError, 'error');
                     return false;
                 }
             }
@@ -1715,7 +2686,7 @@
                         }
                         if (firebaseData.boardTitle) {
                             boardTitleEl.textContent = firebaseData.boardTitle;
-                            classTitleInput.value = firebaseData.boardTitle.replace(translations[currentLang].boardTitle + " - ", "");
+                            classTitleInput.value = firebaseData.boardTitle.replace(t.boardTitle + " - ", "");
                         }
 
                         if (firebaseData.teacherSubject) {
@@ -1734,7 +2705,7 @@
                     return false;
                 } catch (error) {
                     console.error("❌ Error loading from Firebase:", error);
-                    showMessage(translations[currentLang].firebase.syncError, 'error');
+                    showMessage(t.firebase.syncError, 'error');
                     return false;
                 }
             }
@@ -1787,9 +2758,6 @@
                 syncDataBtn.addEventListener('click', syncData);
             }
 
-            // ===== زر عرض جميع البيانات (القديم) - سيتم استبداله =====
-            // تم استبدال viewAllDataBtn.onclick بالكود الجديد أدناه
-
             // ===== زر حذف كل البيانات =====
             if (clearAllDataBtn) {
                 clearAllDataBtn.addEventListener('click', async function() {
@@ -1802,7 +2770,9 @@
                         return;
                     }
 
-                    var confirmDelete = confirm('🔥 تحذير شديد: هل أنت متأكد من حذف كل البيانات؟\n\nسيتم حذف:\n- جميع المستخدمين (ما عدا المشرف)\n- جميع المعلمين\n- جميع الأقسام\n- جميع الطلاب\n- جميع الأيميلات\n\nلا يمكن التراجع عن هذا الإجراء!');
+                    var confirmDelete = confirm(
+                        '🔥 تحذير شديد: هل أنت متأكد من حذف كل البيانات؟\n\nسيتم حذف:\n- جميع المستخدمين (ما عدا المشرف)\n- جميع المعلمين\n- جميع الأقسام\n- جميع الطلاب\n- جميع الأيميلات\n\nلا يمكن التراجع عن هذا الإجراء!'
+                        );
                     if (!confirmDelete) return;
 
                     var confirmDelete2 = confirm('⚠️ تأكيد نهائي: هل أنت متأكد من حذف كل البيانات؟\nهذا الإجراء نهائي ولا يمكن التراجع عنه!');
@@ -1859,9 +2829,10 @@
                         updateClassSelect();
                         initStudentsUI();
                         updateTable();
-                        boardTitleEl.textContent = translations[currentLang].boardTitle;
+                        boardTitleEl.textContent = t.boardTitle;
 
-                        showMessage('✅ تم حذف كل البيانات بنجاح!\nتم الاحتفاظ فقط بالمشرف (a7112119@gmail.com)', 'success');
+                        showMessage('✅ تم حذف كل البيانات بنجاح!\nتم الاحتفاظ فقط بالمشرف (a7112119@gmail.com)',
+                        'success');
 
                         setTimeout(function() {
                             location.reload();
@@ -1906,7 +2877,8 @@
                         if (usersWithoutEmail.length > 0) {
                             for (var i = 0; i < usersWithoutEmail.length; i++) {
                                 var uid2 = usersWithoutEmail[i];
-                                var email = prompt('📧 أدخل البريد الإلكتروني للمستخدم (UID: ' + uid2.substring(0, 12) + '...):');
+                                var email = prompt('📧 أدخل البريد الإلكتروني للمستخدم (UID: ' + uid2.substring(0, 12) +
+                                    '...):');
                                 if (email && email.trim()) {
                                     await firebaseDb.ref('users/' + uid2 + '/profile/email').set(email.trim());
                                     fixedCount++;
@@ -1941,10 +2913,13 @@
                         return;
                     }
 
-                    var confirmDelete = confirm('⚠️ تحذير: هل أنت متأكد من حذف جميع المستخدمين ما عدا المشرف (a7112119@gmail.com)؟\n\nسيتم حذف جميع بيانات المستخدمين الآخرين بشكل نهائي!');
+                    var confirmDelete = confirm(
+                        '⚠️ تحذير: هل أنت متأكد من حذف جميع المستخدمين ما عدا المشرف (a7112119@gmail.com)؟\n\nسيتم حذف جميع بيانات المستخدمين الآخرين بشكل نهائي!'
+                        );
                     if (!confirmDelete) return;
 
-                    var confirmDelete2 = confirm('⚠️ تأكيد نهائي: هل أنت متأكد من حذف جميع المستخدمين باستثناء المشرف؟\nلا يمكن التراجع عن هذا الإجراء!');
+                    var confirmDelete2 = confirm('⚠️ تأكيد نهائي: هل أنت متأكد من حذف جميع المستخدمين باستثناء المشرف؟\nلا يمكن التراجع عن هذا الإجراء!'
+                        );
                     if (!confirmDelete2) return;
 
                     showMessage('⏳ جاري حذف جميع المستخدمين ما عدا المشرف...', 'info');
@@ -1970,7 +2945,8 @@
                             console.log('🗑️ تم حذف المستخدم:', userEmail || uid);
                         }
 
-                        showMessage('✅ تم حذف ' + deletedCount + ' مستخدم، وتم الاحتفاظ بـ ' + keptCount + ' مستخدم (المشرف)', 'success');
+                        showMessage('✅ تم حذف ' + deletedCount + ' مستخدم، وتم الاحتفاظ بـ ' + keptCount +
+                            ' مستخدم (المشرف)', 'success');
 
                         setTimeout(function() {
                             location.reload();
@@ -2045,10 +3021,11 @@
                 var name = newTeacherNameInput.value.trim();
                 var subject = newTeacherSubjectSelect.value;
                 if (!name || !subject) {
-                    alert(currentLang === 'ar' ? "الرجاء إدخال اسم المعلم وتخصصه" : "Please enter teacher name and subject");
+                    alert("الرجاء إدخال اسم المعلم وتخصصه");
                     return;
                 }
-                var newTeacher = { id: 't_' + Date.now(), name: name, subject: subject, icon: getSubjectIcon(subject) };
+                var newTeacher = { id: 't_' + Date.now(), name: name, subject: subject, icon: getSubjectIcon(
+                    subject) };
                 teachersList.push(newTeacher);
                 saveTeachersList();
                 newTeacherNameInput.value = '';
@@ -2056,7 +3033,7 @@
                 initTeacherSelect();
                 teacherSelect.value = newTeacher.id;
                 selectTeacher(newTeacher.id);
-                alert(currentLang === 'ar' ? "تمت إضافة المعلم بنجاح" : "Teacher added successfully");
+                alert("تمت إضافة المعلم بنجاح");
             });
 
             deleteTeacherBtn.addEventListener("click", function() {
@@ -2070,15 +3047,16 @@
                 }
 
                 if (!currentTeacherId) {
-                    alert(translations[currentLang].errorSelectTeacher);
+                    alert(t.errorSelectTeacher);
                     return;
                 }
-                if (confirm(translations[currentLang].confirmDeleteTeacher)) {
-                    teachersList = teachersList.filter(function(t) { return t.id !== currentTeacherId; });
+                if (confirm(t.confirmDeleteTeacher)) {
+                    teachersList = teachersList.filter(function(tch) { return tch.id !== currentTeacherId; });
                     saveTeachersList();
                     var keysToRemove = [];
                     Object.keys(localStorage).forEach(function(key) {
-                        if (key.includes('tracking_data_history_' + currentTeacherId + '_')) keysToRemove.push(key);
+                        if (key.includes('tracking_data_history_' + currentTeacherId + '_')) keysToRemove.push(
+                        key);
                         if (key.includes('tracking_names_' + currentTeacherId + '_')) keysToRemove.push(key);
                         if (key.includes('original_names_' + currentTeacherId + '_')) keysToRemove.push(key);
                     });
@@ -2098,9 +3076,9 @@
                     teacherCardContainer.innerHTML = "";
                     studentsContainer.innerHTML = "";
                     tbody.innerHTML = "";
-                    boardTitleEl.textContent = translations[currentLang].boardTitle;
+                    boardTitleEl.textContent = t.boardTitle;
                     initTeacherSelect();
-                    alert(translations[currentLang].teacherDeleted);
+                    alert(t.teacherDeleted);
                 }
             });
 
@@ -2114,7 +3092,6 @@
                     return;
                 }
 
-                var t = translations[currentLang];
                 if (confirm(t.confirmDeleteAllTeachers)) {
                     teachersList = [];
                     saveTeachersList();
@@ -2151,11 +3128,14 @@
                         var addedCount = 0;
                         rows.forEach(function(row) {
                             var name = row[0] ? row[0].toString().trim() : null;
-                            var subject = (row[1] ? row[1].toString().trim() : null) || newTeacherSubjectSelect.value || "أخرى";
+                            var subject = (row[1] ? row[1].toString().trim() : null) || newTeacherSubjectSelect
+                                .value || "أخرى";
                             if (name) {
-                                var exists = teachersList.find(function(t) { return t.name === name; });
+                                var exists = teachersList.find(function(tch) { return tch.name === name; });
                                 if (!exists) {
-                                    teachersList.push({ id: 't_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), name: name, subject: subject, icon: getSubjectIcon(subject) });
+                                    teachersList.push({ id: 't_' + Date.now() + '_' + Math.random().toString(36)
+                                            .substr(2, 5), name: name, subject: subject,
+                                        icon: getSubjectIcon(subject) });
                                     addedCount++;
                                 }
                             }
@@ -2163,14 +3143,14 @@
                         if (addedCount > 0) {
                             saveTeachersList();
                             initTeacherSelect();
-                            showMessage(currentLang === 'ar' ? ('تم استيراد ' + addedCount + ' معلم') : ('Imported ' + addedCount + ' teachers'), 'success');
+                            showMessage('تم استيراد ' + addedCount + ' معلم', 'success');
                         } else {
-                            showMessage(currentLang === 'ar' ? "لم يتم إضافة معلمين" : "No teachers added", 'info');
+                            showMessage("لم يتم إضافة معلمين", 'info');
                         }
                         importTeachersInput.value = '';
                     } catch (error) {
                         console.error(error);
-                        showMessage(currentLang === 'ar' ? "خطأ في قراءة الملف" : "Error reading file", 'error');
+                        showMessage("خطأ في قراءة الملف", 'error');
                     }
                 };
                 reader.readAsBinaryString(file);
@@ -2204,7 +3184,6 @@
                 el.textContent = displayName;
                 var displayIndex = studentNames.indexOf(displayName);
                 var originalName = displayIndex !== -1 ? originalStudentNames[displayIndex] : displayName;
-                var t = translations[currentLang];
                 var studentData = data[originalName] || {};
                 var st = studentData ? t.states[studentData.state] : t.states[0];
                 el.style.background = st.color;
@@ -2316,14 +3295,16 @@
                 var studentElement = document.querySelector('.student[data-name="' + displayName + '"]');
                 if (!studentElement) return;
                 data[originalName].state = newState;
-                var t = translations[currentLang];
                 var st = t.states[newState];
                 studentElement.style.background = st.color;
                 studentElement.title = st.label;
-                if (newState === 1) data[originalName].participationCounter = (data[originalName].participationCounter || 0) + 1;
+                if (newState === 1) data[originalName].participationCounter = (data[originalName].participationCounter ||
+                    0) + 1;
                 else if (newState === 2) data[originalName].talkCounter = (data[originalName].talkCounter || 0) + 1;
-                else if (newState === 3) data[originalName].talkWithoutPermissionCounter = (data[originalName].talkWithoutPermissionCounter || 0) + 1;
-                else if (newState === 4) data[originalName].badBehaviorCounter = (data[originalName].badBehaviorCounter || 0) + 1;
+                else if (newState === 3) data[originalName].talkWithoutPermissionCounter = (data[originalName]
+                    .talkWithoutPermissionCounter || 0) + 1;
+                else if (newState === 4) data[originalName].badBehaviorCounter = (data[originalName]
+                    .badBehaviorCounter || 0) + 1;
                 else if (newState === 5) data[originalName].absenceCounter = (data[originalName].absenceCounter || 0) + 1;
                 var msgKey = '';
                 if (newState === 1) msgKey = 'msgParticipate';
@@ -2343,7 +3324,6 @@
                 if (displayIndex === -1) return;
                 var originalName = originalStudentNames[displayIndex] || displayName;
                 data[originalName][counterKey] = (data[originalName][counterKey] || 0) + 1;
-                var t = translations[currentLang];
                 showMessage(displayName + ': ' + t[msgKey], 'info');
                 await saveAll();
                 updateTable();
@@ -2353,7 +3333,6 @@
                 var displayIndex = studentNames.indexOf(displayName);
                 if (displayIndex === -1) return;
                 var originalName = originalStudentNames[displayIndex] || displayName;
-                var t = translations[currentLang];
                 if (confirm(t.confirmDeleteStudent(displayName))) {
                     originalStudentNames.splice(displayIndex, 1);
                     studentNames.splice(displayIndex, 1);
@@ -2372,7 +3351,6 @@
                 var displayIndex = studentNames.indexOf(displayName);
                 if (displayIndex === -1) return;
                 var originalName = originalStudentNames[displayIndex] || displayName;
-                var t = translations[currentLang];
                 if (confirm(t.resetConfirm(displayName))) {
                     data[originalName] = {
                         state: 0, book: true, notebook: true, homework: true, note: "",
@@ -2465,7 +3443,9 @@
                     var isActive = studentData[key];
                     var counterKey = key + 'NotActiveCounter';
                     var counterValue = studentData[counterKey] || 0;
-                    td.innerHTML = '<div class="check-cell-content"><span class="check-icon ' + (isActive ? 'active' : 'inactive') + '">' + (isActive ? '✅' : '❌') + '</span><span class="check-counter">' + counterValue + '</span></div>';
+                    td.innerHTML = '<div class="check-cell-content"><span class="check-icon ' + (isActive ? 'active' :
+                        'inactive') + '">' + (isActive ? '✅' : '❌') + '</span><span class="check-counter">' +
+                        counterValue + '</span></div>';
                 };
                 td.addEventListener("click", async function() {
                     var studentData = data[originalName] || {};
@@ -2488,7 +3468,6 @@
             function createNotesCell(displayName) {
                 var td = document.createElement("td");
                 var select = document.createElement("select");
-                var t = translations[currentLang];
                 var displayIndex = studentNames.indexOf(displayName);
                 var originalName = displayIndex !== -1 ? originalStudentNames[displayIndex] : displayName;
                 t.notesOptions.forEach(function(o) {
@@ -2510,7 +3489,8 @@
                 var td = document.createElement("td");
                 var status = getDynamicStatus(type, count);
                 td.className = 'status-text-cell ' + status.class;
-                td.innerHTML = '<div class="cell-wrapper"><span class="action-label">' + status.text + '</span><span class="counter-value">' + status.count + '</span></div>';
+                td.innerHTML = '<div class="cell-wrapper"><span class="action-label">' + status.text +
+                    '</span><span class="counter-value">' + status.count + '</span></div>';
                 return td;
             }
 
@@ -2524,7 +3504,6 @@
 
             function updateTable() {
                 tbody.innerHTML = "";
-                var t = translations[currentLang];
                 studentNames.forEach(function(displayName, displayIndex) {
                     var originalName = originalStudentNames[displayIndex] || displayName;
                     var studentData = data[originalName] || {};
@@ -2627,7 +3606,8 @@
                     btnTableNotebook.onclick = (function(displayName) {
                         return async function(e) {
                             e.stopPropagation();
-                            await incrementCounter(displayName, 'notebookNotActiveCounter', 'notBringingNotebook');
+                            await incrementCounter(displayName, 'notebookNotActiveCounter',
+                            'notBringingNotebook');
                         };
                     })(displayName);
                     quickActions.appendChild(btnTableNotebook);
@@ -2662,7 +3642,8 @@
                     row.appendChild(nameCell);
 
                     var ratingCell = document.createElement("td");
-                    ratingCell.innerHTML = '⭐'.repeat(st.stars) + ' <span class="stars-count">' + st.stars + '</span>';
+                    ratingCell.innerHTML = '⭐'.repeat(st.stars) + ' <span class="stars-count">' + st.stars +
+                    '</span>';
                     row.appendChild(ratingCell);
                     row.appendChild(createStatusCell(stIdx === 1, "✔"));
                     row.appendChild(createStatusCell(stIdx === 2, "✔"));
@@ -2737,44 +3718,41 @@
                 });
             }
 
-            function applyLanguage(lang) {
-                currentLang = lang;
-                document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
-                document.documentElement.lang = lang;
-                document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-                var t = translations[lang];
-                document.getElementById("switchToAr").classList.toggle('active', lang === 'ar');
-                document.getElementById("switchToEn").classList.toggle('active', lang === 'en');
+            // ===== تطبيق اللغة العربية دائمًا =====
+            function applyArabic() {
+                document.body.dir = 'rtl';
+                document.documentElement.lang = 'ar';
+                document.documentElement.dir = 'rtl';
+
                 classTitleInput.placeholder = "أدخل اسم القسم...";
-                importExcelLabel.textContent = t.importExcel || "📥 تحميل أسماء من Excel";
-                exportExcel.textContent = t.exportExcel || "📤 تصدير Excel";
-                newTeacherNameInput.placeholder = t.newTeacherPlaceholder || "اسم المعلم...";
-                newStudentNameInput.placeholder = t.newStudentPlaceholder || "أضف طالباً يدوياً...";
-                deleteTeacherBtn.textContent = t.deleteTeacher || "حذف المعلم 🗑️";
-                deleteAllTeachersBtn.textContent = t.deleteAllTeachers || "💥 حذف الكل";
-                importTeachersLabel.innerHTML = t.importTeachersLabel || "<i class='fas fa-file-excel'></i> تحميل معلمين";
-                var classNameDisplay = currentClass ? (classOptions[currentClass]?.[lang] || currentClass) : "";
-                var teacherNameDisplay = currentTeacherId ? (teachersList.find(function(tch) { return tch.id === currentTeacherId; })?.name || "") : "";
+                importExcelLabel.textContent = "📥 تحميل أسماء من Excel";
+                exportExcel.textContent = "📤 تصدير Excel";
+                newTeacherNameInput.placeholder = t.newTeacherPlaceholder;
+                newStudentNameInput.placeholder = t.newStudentPlaceholder;
+                deleteTeacherBtn.textContent = t.deleteTeacher;
+                deleteAllTeachersBtn.textContent = t.deleteAllTeachers;
+                importTeachersLabel.innerHTML = t.importTeachersLabel;
+
+                var classNameDisplay = currentClass || "";
+                var teacherNameDisplay = currentTeacherId ? (teachersList.find(function(tch) { return tch.id ===
+                    currentTeacherId; })?.name || "") : "";
                 var titleText = classTitleInput.value || (teacherNameDisplay + ' - ' + classNameDisplay);
                 boardTitleEl.textContent = t.boardTitle + ' - ' + titleText;
-                Array.from(classSelect.options).forEach(function(option) {
-                    var val = option.value;
-                    if (val && classOptions[val]) option.textContent = classOptions[val][lang];
-                });
-                table.querySelectorAll("th").forEach(function(header) {
-                    var key = header.getAttribute('data-key');
-                    if (key && t[key]) header.textContent = t[key];
-                });
+
                 var copyrightFooter = document.getElementById('copyrightFooter');
-                if (copyrightFooter) copyrightFooter.textContent = "📊 نظام متابعة المعلمين والطلاب - حقوق الملكية © 2026 محمد رضا عوف";
+                if (copyrightFooter) copyrightFooter.textContent =
+                    "📊 نظام متابعة المعلمين والطلاب - حقوق الملكية © 2026 محمد رضا عوف";
+
                 var teacherCard = document.querySelector('.teacher-card');
                 if (teacherCard) {
                     var teacherInfo = teacherCard.querySelector('.teacher-info p');
                     if (teacherInfo) {
-                        teacherInfo.textContent = lang === 'ar' ? ('التخصص: ' + (teachersList.find(function(t) { return t.id === currentTeacherId; })?.subject || '')) : ('Subject: ' + (teachersList.find(function(t) { return t.id === currentTeacherId; })?.subject || ''));
+                        teacherInfo.textContent = 'التخصص: ' + (teachersList.find(function(tch) { return tch.id ===
+                            currentTeacherId; })?.subject || '');
                     }
                 }
-                localStorage.setItem('dashboard_lang', lang);
+
+                localStorage.setItem('dashboard_lang', 'ar');
                 updateDisplayNames();
                 initStudentsUI();
                 updateTable();
@@ -2788,24 +3766,24 @@
             }
 
             var classOptions = {
-                '4B': { ar: 'رابع B', en: '4th B' },
-                '4D': { ar: 'رابع D', en: '4th D' },
-                '5B': { ar: 'خامس B', en: '5th B' },
-                '5D': { ar: 'خامس D', en: '5th D' },
-                '6B': { ar: 'سادس B', en: '6th B' },
-                '6D': { ar: 'سادس D', en: '6th D' },
-                '7B': { ar: 'سابع B', en: '7th B' },
-                '7D': { ar: 'سابع D', en: '7th D' },
-                '8B': { ar: 'ثامن B', en: '8th B' },
-                '8D': { ar: 'ثامن D', en: '8th D' },
-                '9B': { ar: 'تاسع B', en: '9th B' },
-                '9D': { ar: 'تاسع D', en: '9th D' },
-                '10B': { ar: 'عاشر B', en: '10th B' },
-                '10D': { ar: 'عاشر D', en: '10th D' },
-                '11B': { ar: 'حادي عشر B', en: '11th B' },
-                '11D': { ar: 'حادي عشر D', en: '11th D' },
-                '12B': { ar: 'ثاني عشر B', en: '12th B' },
-                '12D': { ar: 'ثاني عشر D', en: '12th D' }
+                '4B': { ar: 'رابع B' },
+                '4D': { ar: 'رابع D' },
+                '5B': { ar: 'خامس B' },
+                '5D': { ar: 'خامس D' },
+                '6B': { ar: 'سادس B' },
+                '6D': { ar: 'سادس D' },
+                '7B': { ar: 'سابع B' },
+                '7D': { ar: 'سابع D' },
+                '8B': { ar: 'ثامن B' },
+                '8D': { ar: 'ثامن D' },
+                '9B': { ar: 'تاسع B' },
+                '9D': { ar: 'تاسع D' },
+                '10B': { ar: 'عاشر B' },
+                '10D': { ar: 'عاشر D' },
+                '11B': { ar: 'حادي عشر B' },
+                '11D': { ar: 'حادي عشر D' },
+                '12B': { ar: 'ثاني عشر B' },
+                '12D': { ar: 'ثاني عشر D' }
             };
 
             // ===== دوال المشرف =====
@@ -2814,7 +3792,6 @@
             }
 
             function calculateLevel(state, participation) {
-                var t = translations[currentLang];
                 if (state === 1 && participation >= 70) return t.levels[5];
                 if (state === 1 && participation >= 50) return t.levels[4];
                 if (state === 1 && participation >= 30) return t.levels[3];
@@ -2833,9 +3810,12 @@
 
             function getAllLocalStorageData() {
                 var results = [];
-                var filterTeacher = document.getElementById('adminTeacherFilter') ? document.getElementById('adminTeacherFilter').value : 'all';
-                var filterClass = document.getElementById('adminClassFilter') ? document.getElementById('adminClassFilter').value : 'all';
-                var filterDate = document.getElementById('adminDateFilter') ? document.getElementById('adminDateFilter').value : '';
+                var filterTeacher = document.getElementById('adminTeacherFilter') ? document.getElementById(
+                    'adminTeacherFilter').value : 'all';
+                var filterClass = document.getElementById('adminClassFilter') ? document.getElementById(
+                    'adminClassFilter').value : 'all';
+                var filterDate = document.getElementById('adminDateFilter') ? document.getElementById('adminDateFilter')
+                    .value : '';
 
                 Object.keys(localStorage).forEach(function(key) {
                     if (key.indexOf('tracking_data_history_') === 0) {
@@ -2862,7 +3842,7 @@
                                     date: dateKey,
                                     student: sName,
                                     state: sd.state,
-                                    attendance: sd.state===5 ? 'غياب' : 'حضور',
+                                    attendance: sd.state === 5 ? 'غياب' : 'حضور',
                                     book: sd.book ? '✅' : '❌',
                                     notebook: sd.notebook ? '✅' : '❌',
                                     homework: sd.homework ? '✅' : '❌',
@@ -2894,7 +3874,11 @@
 
                 results.forEach(function(r) {
                     var tr = document.createElement('tr');
-                    var cells = [r.teacher, r.subject, r.class, r.date, r.student, r.state+'/5', r.attendance, r.book, r.notebook, r.homework, r.note, r.participation, r.absence, r.lateness, r.behavior, r.talking, r.noPart, r.noBook, r.noNotebook, r.noHomework, r.level, r.progress];
+                    var cells = [r.teacher, r.subject, r.class, r.date, r.student, r.state + '/5', r.attendance,
+                        r.book, r.notebook, r.homework, r.note, r.participation, r.absence, r.lateness,
+                        r.behavior, r.talking, r.noPart, r.noBook, r.noNotebook, r.noHomework, r.level,
+                        r.progress
+                    ];
                     cells.forEach(function(val) {
                         var td = document.createElement('td');
                         td.textContent = val;
@@ -2927,10 +3911,10 @@
                     var teacherFilter = document.getElementById('adminTeacherFilter');
                     if (teacherFilter) {
                         teacherFilter.innerHTML = '<option value="all">الكل</option>';
-                        teachersList.forEach(function(t) {
+                        teachersList.forEach(function(tch) {
                             var opt = document.createElement('option');
-                            opt.value = t.id;
-                            opt.textContent = t.name + ' - ' + t.subject;
+                            opt.value = tch.id;
+                            opt.textContent = tch.name + ' - ' + tch.subject;
                             teacherFilter.appendChild(opt);
                         });
                     }
@@ -2996,11 +3980,14 @@
                     wb.creator = 'محمد رضا عوف';
                     var cellStyle = {
                         alignment: { horizontal: 'center', vertical: 'middle' },
-                        border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+                        border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' },
+                            right: { style: 'thin' } }
                     };
 
                     var wsNew = wb.addWorksheet('تفاعل المعلمين', { properties: { tabColor: { argb: 'FF8B5CF6' } } });
-                    var headersNew = ['اسم المعلم', 'المادة', 'الصف', 'عدد الطلاب المشاركين', 'إجمالي الطلاب', 'نسبة ضبط الصف', 'نسبة تفاعل الطلاب', 'نسبة تفعيل المعلم الإجمالي'];
+                    var headersNew = ['اسم المعلم', 'المادة', 'الصف', 'عدد الطلاب المشاركين', 'إجمالي الطلاب',
+                        'نسبة ضبط الصف', 'نسبة تفاعل الطلاب', 'نسبة تفعيل المعلم الإجمالي'
+                    ];
                     var rHNew = wsNew.addRow(headersNew);
                     rHNew.eachCell(function(c) {
                         c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -3048,12 +4035,15 @@
                         Object.keys(g.students).forEach(function(sName) {
                             if (g.students[sName].participation > 0) participatingStudentsCount++;
                         });
-                        var ضبط_الصف = 100 - (((g.totalBehavior + g.totalTalking) / (g.totalRecords || 1)) * 100);
+                        var ضبط_الصف = 100 - (((g.totalBehavior + g.totalTalking) / (g.totalRecords || 1)) *
+                        100);
                         ضبط_الصف = Math.max(0, Math.min(100, Math.round(ضبط_الصف)));
-                        var تفاعل_الطلاب = totalStudentsInClass > 0 ? (participatingStudentsCount / totalStudentsInClass) * 100 : 0;
+                        var تفاعل_الطلاب = totalStudentsInClass > 0 ? (participatingStudentsCount /
+                            totalStudentsInClass) * 100 : 0;
                         تفاعل_الطلاب = Math.round(تفاعل_الطلاب);
                         var نسبة_الحضور = g.totalRecords > 0 ? (g.totalAttendance / g.totalRecords) * 100 : 0;
-                        var نسبة_الأدوات = g.totalRecords > 0 ? ((g.totalBook + g.totalNotebook + g.totalHomework) / (g.totalRecords * 3)) * 100 : 0;
+                        var نسبة_الأدوات = g.totalRecords > 0 ? ((g.totalBook + g.totalNotebook + g
+                            .totalHomework) / (g.totalRecords * 3)) * 100 : 0;
                         var التفعيل_الإجمالي = (ضبط_الصف + تفاعل_الطلاب + نسبة_الحضور + نسبة_الأدوات) / 4;
                         التفعيل_الإجمالي = Math.max(0, Math.min(100, Math.round(التفعيل_الإجمالي)));
                         var rRow = wsNew.addRow([
@@ -3072,7 +4062,10 @@
                     wsNew.getColumn(1).width = 25;
 
                     var ws1 = wb.addWorksheet('كل السجلات', { properties: { tabColor: { argb: 'FF4F46E5' } } });
-                    var headers1 = ['المعلم','المادة','القسم','التاريخ','الطالب','التقييم','الحضور','الكتاب','الدفتر','الواجب','ملاحظات','المشاركات','الغياب','التأخر','السلوكيات','التحدث','لا يشارك','بدون كتاب','بدون دفتر','بدون واجب','المستوى','نسبة التقدم'];
+                    var headers1 = ['المعلم', 'المادة', 'القسم', 'التاريخ', 'الطالب', 'التقييم', 'الحضور', 'الكتاب',
+                        'الدفتر', 'الواجب', 'ملاحظات', 'المشاركات', 'الغياب', 'التأخر', 'السلوكيات', 'التحدث',
+                        'لا يشارك', 'بدون كتاب', 'بدون دفتر', 'بدون واجب', 'المستوى', 'نسبة التقدم'
+                    ];
                     var rH1 = ws1.addRow(headers1);
                     rH1.eachCell(function(c) {
                         c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -3081,7 +4074,11 @@
                         c.border = cellStyle.border;
                     });
                     results.forEach(function(r) {
-                        var rRow = ws1.addRow([r.teacher, r.subject, r.class, r.date, r.student, r.state, r.attendance, r.book, r.notebook, r.homework, r.note, r.participation, r.absence, r.lateness, r.behavior, r.talking, r.noPart, r.noBook, r.noNotebook, r.noHomework, r.level, r.progress]);
+                        var rRow = ws1.addRow([r.teacher, r.subject, r.class, r.date, r.student, r.state,
+                            r.attendance, r.book, r.notebook, r.homework, r.note, r.participation,
+                            r.absence, r.lateness, r.behavior, r.talking, r.noPart, r.noBook, r
+                            .noNotebook, r.noHomework, r.level, r.progress
+                        ]);
                         rRow.eachCell(function(cell) { cell.style = cellStyle; });
                     });
                     ws1.columns.forEach(function(col) { col.width = 15; });
@@ -3089,7 +4086,7 @@
                     ws1.getColumn(5).width = 25;
 
                     var ws2 = wb.addWorksheet('ملخص الطلاب التراكمي', { properties: { tabColor: { argb: 'FF10B981' } } });
-                    var headers2 = ['الطالب','إجمالي المشاركات','إجمالي الغياب','إجمالي السلوكيات السلبية'];
+                    var headers2 = ['الطالب', 'إجمالي المشاركات', 'إجمالي الغياب', 'إجمالي السلوكيات السلبية'];
                     var rH2 = ws2.addRow(headers2);
                     rH2.eachCell(function(c) {
                         c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -3099,7 +4096,8 @@
                     });
                     var studentSummary = {};
                     results.forEach(function(r) {
-                        if (!studentSummary[r.student]) studentSummary[r.student] = {participation:0, absence:0, behavior:0};
+                        if (!studentSummary[r.student]) studentSummary[r.student] = { participation: 0,
+                            absence: 0, behavior: 0 };
                         studentSummary[r.student].participation += r.participation;
                         studentSummary[r.student].absence += r.absence;
                         studentSummary[r.student].behavior += r.behavior;
@@ -3112,16 +4110,18 @@
                     ws2.columns.forEach(function(col) { col.width = 18; });
                     ws2.getColumn(1).width = 25;
 
-                    var ws3 = wb.addWorksheet('إحصائيات عامة', {properties:{tabColor:{argb:'FFDC2626'}}});
+                    var ws3 = wb.addWorksheet('إحصائيات عامة', { properties: { tabColor: { argb: 'FFDC2626' } } });
                     var totalS = Object.keys(studentSummary).length;
-                    var totalP = 0, totalA = 0, totalB = 0;
+                    var totalP = 0,
+                        totalA = 0,
+                        totalB = 0;
                     Object.values(studentSummary).forEach(function(s) {
                         totalP += s.participation;
                         totalA += s.absence;
                         totalB += s.behavior;
                     });
                     var statsData = [
-                        ['الإحصائية','القيمة'],
+                        ['الإحصائية', 'القيمة'],
                         ['إجمالي السجلات المسجلة بالمدرسة', results.length],
                         ['عدد الطلاب الكلي بالنظام', totalS],
                         ['إجمالي مشاركات المدرسة الكلية', totalP],
@@ -3134,13 +4134,15 @@
                         var r = ws3.addRow(row);
                         if (idx === 0) {
                             r.eachCell(function(cell) {
-                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDC2626' } };
+                                cell.fill = { type: 'pattern', pattern: 'solid',
+                                    fgColor: { argb: 'FFDC2626' } };
                                 cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                             });
                         }
                         r.eachCell(function(cell) {
                             cell.alignment = { horizontal: 'center' };
-                            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+                            cell.border = { top: { style: 'thin' }, left: { style: 'thin' },
+                                bottom: { style: 'thin' }, right: { style: 'thin' } };
                         });
                     });
                     ws3.getColumn(1).width = 35;
@@ -3154,7 +4156,8 @@
                         a.download = 'تقرير_المشرف_الشامل_4_شيتات_' + formattedSelectedDate() + '.xlsx';
                         a.click();
                         URL.revokeObjectURL(url);
-                        showMessage('✅ تم تصدير تقرير المشرف الشامل بنجاح (4 شيتات تتضمن تفاعل المعلمين)', 'success');
+                        showMessage('✅ تم تصدير تقرير المشرف الشامل بنجاح (4 شيتات تتضمن تفاعل المعلمين)',
+                        'success');
                     }).catch(function(err) {
                         console.error(err);
                         showMessage('❌ حدث خطأ في التصدير', 'error');
@@ -3166,15 +4169,14 @@
             if (document.getElementById("exportExcel")) {
                 document.getElementById("exportExcel").addEventListener("click", function() {
                     if (!currentTeacherId || !currentClass) {
-                        alert(currentLang === 'ar' ? "الرجاء اختيار المعلم والقسم أولاً" : "Please select Teacher and Class first.");
+                        alert("الرجاء اختيار المعلم والقسم أولاً");
                         return;
                     }
-                    const t = translations[currentLang];
                     const rows = [];
                     const currentSelDate = selectedDate;
-                    const days = currentLang === 'ar' ? ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                    const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
                     const dayName = days[currentSelDate.getDay()];
-                    const dateString = currentSelDate.toLocaleDateString(currentLang === 'ar' ? "ar-SA" : "en-US");
+                    const dateString = currentSelDate.toLocaleDateString("ar-SA");
                     const timeString = new Date().toLocaleTimeString();
                     const teacher = teachersList.find(tch => tch.id === currentTeacherId);
                     const teacherName = teacher ? teacher.name : "Teacher";
@@ -3195,8 +4197,10 @@
                         const stIdx = studentData.state || 0;
                         const st = t.states[stIdx];
 
-                        const baseLevel = typeof calculateLevel === 'function' ? calculateLevel(stIdx, studentData.participationCounter) : (studentData.level || "");
-                        const pPercentage = typeof calculateProgress === 'function' ? calculateProgress(studentData) : 0;
+                        const baseLevel = typeof calculateLevel === 'function' ? calculateLevel(stIdx,
+                            studentData.participationCounter) : (studentData.level || "");
+                        const pPercentage = typeof calculateProgress === 'function' ? calculateProgress(
+                            studentData) : 0;
 
                         rows.push([
                             displayName,
@@ -3229,7 +4233,8 @@
                     const wb = XLSX.utils.book_new();
                     const ws = XLSX.utils.aoa_to_sheet(rows);
                     XLSX.utils.book_append_sheet(wb, ws, "بيانات اليوم");
-                    XLSX.writeFile(wb, `كشف_متابعة_${teacherName}_${className}_${dateString.replace(/\//g, '-')}.xlsx`);
+                    XLSX.writeFile(wb,
+                        `كشف_متابعة_${teacherName}_${className}_${dateString.replace(/\//g, '-')}.xlsx`);
                 });
             }
 
@@ -3237,10 +4242,9 @@
             if (document.getElementById("showYearReportBtn")) {
                 document.getElementById("showYearReportBtn").onclick = async function() {
                     if (!currentTeacherId || !currentClass) {
-                        alert(currentLang === 'ar' ? "الرجاء اختيار المعلم والقسم أولاً" : "Please select teacher and class first");
+                        alert("الرجاء اختيار المعلم والقسم أولاً");
                         return;
                     }
-                    const t = translations[currentLang];
                     const teacher = teachersList.find(tch => tch.id === currentTeacherId);
                     const teacherName = teacher ? teacher.name : "Teacher";
                     const className = currentClass;
@@ -3249,7 +4253,8 @@
                     const studentTotals = {};
 
                     originalStudentNames.forEach(name => {
-                        studentTotals[name] = { participation: 0, absence: 0, lateness: 0, behavior: 0, book: 0, notebook: 0, homework: 0, days: 0 };
+                        studentTotals[name] = { participation: 0, absence: 0, lateness: 0, behavior: 0,
+                            book: 0, notebook: 0, homework: 0, days: 0 };
                     });
 
                     sortedDates.forEach(dateKey => {
@@ -3258,7 +4263,8 @@
                             if (dayData[name]) {
                                 const sData = dayData[name];
                                 studentTotals[name].days++;
-                                studentTotals[name].participation += (sData.participationCounter || 0);
+                                studentTotals[name].participation += (sData.participationCounter ||
+                                0);
                                 studentTotals[name].absence += (sData.absenceCounter || 0);
                                 studentTotals[name].lateness += (sData.latenessCounter || 0);
                                 studentTotals[name].behavior += (sData.badBehaviorCounter || 0);
@@ -3275,14 +4281,17 @@
                     workbook.created = new Date();
                     workbook.modified = new Date();
 
-                    const worksheetDetail = workbook.addWorksheet('البيانات التفصيلية', { pageSetup: { paperSize: 9, orientation: 'landscape' } });
+                    const worksheetDetail = workbook.addWorksheet('البيانات التفصيلية', { pageSetup: { paperSize: 9,
+                            orientation: 'landscape' } });
                     worksheetDetail.mergeCells('A1:K1');
                     const titleRow = worksheetDetail.getRow(1);
                     titleRow.getCell(1).value = `📊 ${t.boardTitle} - ${teacherName} - ${className} (تقرير شامل)`;
                     titleRow.getCell(1).font = { bold: true, size: 14 };
                     titleRow.getCell(1).alignment = { horizontal: 'center' };
 
-                    worksheetDetail.addRow(["التاريخ", "الاسم", "الحالة", "مشاركة", "غياب", "تأخر", "سلوك", "عدم كتاب", "عدم دفتر", "عدم واجب", "ملاحظات"]);
+                    worksheetDetail.addRow(["التاريخ", "الاسم", "الحالة", "مشاركة", "غياب", "تأخر", "سلوك", "عدم كتاب",
+                        "عدم دفتر", "عدم واجب", "ملاحظات"
+                    ]);
 
                     sortedDates.forEach(dateKey => {
                         const dayData = allHistoryData[dateKey] || {};
@@ -3294,8 +4303,10 @@
                                 const st = t.states[stIdx];
                                 worksheetDetail.addRow([
                                     dateKey, displayName, st.label, sd.participationCounter || 0,
-                                    sd.absenceCounter || 0, sd.latenessCounter || 0, sd.badBehaviorCounter || 0,
-                                    sd.book ? "" : "❌", sd.notebook ? "" : "❌", sd.homework ? "" : "❌", sd.note || ""
+                                    sd.absenceCounter || 0, sd.latenessCounter || 0, sd
+                                    .badBehaviorCounter || 0,
+                                    sd.book ? "" : "❌", sd.notebook ? "" : "❌", sd.homework ?
+                                    "" : "❌", sd.note || ""
                                 ]);
                             }
                         });
@@ -3303,17 +4314,22 @@
 
                     worksheetDetail.columns = [
                         { width: 12 }, { width: 20 }, { width: 25 }, { width: 10 }, { width: 8 },
-                        { width: 8 }, { width: 8 }, { width: 12 }, { width: 12 }, { width: 12 }, { width: 30 }
+                        { width: 8 }, { width: 8 }, { width: 12 }, { width: 12 }, { width: 12 },
+                        { width: 30 }
                     ];
 
                     const worksheetSummary = workbook.addWorksheet('ملخص الطلاب');
-                    worksheetSummary.addRow(["الاسم", "إجمالي المشاركات", "إجمالي الغياب", "إجمالي التأخر", "إجمالي السلوك الخاطئ", "عدم إحضار كتاب", "عدم إحضار دفتر", "عدم حل واجب", "عدد الأيام"]);
+                    worksheetSummary.addRow(["الاسم", "إجمالي المشاركات", "إجمالي الغياب", "إجمالي التأخر",
+                        "إجمالي السلوك الخاطئ", "عدم إحضار كتاب", "عدم إحضار دفتر", "عدم حل واجب", "عدد الأيام"
+                    ]);
 
                     originalStudentNames.forEach((originalName, idx) => {
                         const displayName = studentNames[idx] || originalName;
                         const totals = studentTotals[originalName] || {};
                         worksheetSummary.addRow([
-                            displayName, totals.participation || 0, totals.absence || 0, totals.lateness || 0, totals.behavior || 0, totals.book || 0, totals.notebook || 0, totals.homework || 0, totals.days || 0
+                            displayName, totals.participation || 0, totals.absence || 0, totals
+                            .lateness || 0, totals.behavior || 0, totals.book || 0, totals
+                            .notebook || 0, totals.homework || 0, totals.days || 0
                         ]);
                     });
 
@@ -3329,19 +4345,24 @@
                     statsTitle.getCell(1).font = { bold: true, size: 14 };
                     statsTitle.getCell(1).alignment = { horizontal: 'center' };
 
-                    let totalParticipation = 0, totalAbsence = 0, totalLateness = 0, totalBehavior = 0;
-                    let totalBook = 0, totalNotebook = 0, totalHomework = 0;
+                    let totalParticipation = 0,
+                        totalAbsence = 0,
+                        totalLateness = 0,
+                        totalBehavior = 0;
+                    let totalBook = 0,
+                        totalNotebook = 0,
+                        totalHomework = 0;
                     let totalDays = sortedDates.length;
 
                     originalStudentNames.forEach(name => {
-                        const t = studentTotals[name] || {};
-                        totalParticipation += t.participation || 0;
-                        totalAbsence += t.absence || 0;
-                        totalLateness += t.lateness || 0;
-                        totalBehavior += t.behavior || 0;
-                        totalBook += t.book || 0;
-                        totalNotebook += t.notebook || 0;
-                        totalHomework += t.homework || 0;
+                        const t2 = studentTotals[name] || {};
+                        totalParticipation += t2.participation || 0;
+                        totalAbsence += t2.absence || 0;
+                        totalLateness += t2.lateness || 0;
+                        totalBehavior += t2.behavior || 0;
+                        totalBook += t2.book || 0;
+                        totalNotebook += t2.notebook || 0;
+                        totalHomework += t2.homework || 0;
                     });
 
                     worksheetStats.addRow(["البند", "القيمة"]);
@@ -3367,14 +4388,12 @@
                         URL.revokeObjectURL(link.href);
                     } catch (error) {
                         console.error(error);
-                        alert(currentLang === 'ar' ? "حدث خطأ في التصدير" : "Error exporting file");
+                        alert("حدث خطأ في التصدير");
                     }
                 };
             }
 
-            // ===== ===== ===== ===== ===== ===== ===== =====
-            // ===== التعديل الجديد: زر عرض جميع البيانات =====
-            // ===== ===== ===== ===== ===== ===== ===== =====
+            // ===== زر عرض جميع البيانات (للمشرف) =====
             if (viewAllDataBtn) {
                 viewAllDataBtn.onclick = function() {
                     if (!isAdminUser()) {
@@ -3392,13 +4411,15 @@
                     if (!container) {
                         container = document.createElement("div");
                         container.id = "adminDataContainer";
-                        container.style.cssText = "margin-top: 25px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;";
+                        container.style.cssText =
+                            "margin-top: 25px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;";
                         viewAllDataBtn.parentNode.appendChild(container);
                     }
 
-                    // تجميع إحصائيات المعلمين
                     var teacherStats = {};
-                    var totalP = 0, totalA = 0, totalB = 0;
+                    var totalP = 0,
+                        totalA = 0,
+                        totalB = 0;
 
                     results.forEach(function(r) {
                         totalP += (r.participation || 0);
@@ -3407,7 +4428,8 @@
 
                         var key = r.teacher + '||' + r.class;
                         if (!teacherStats[key]) {
-                            teacherStats[key] = { teacher: r.teacher, className: r.class, students: {}, records: 0, bad: 0 };
+                            teacherStats[key] = { teacher: r.teacher, className: r.class, students: {},
+                                records: 0, bad: 0 };
                         }
                         teacherStats[key].records++;
                         teacherStats[key].bad += ((r.behavior || 0) + (r.talking || 0));
@@ -3416,7 +4438,6 @@
                         }
                     });
 
-                    // بناء HTML
                     var html = `
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; margin-bottom: 20px;">
                             <h3 style="color: #4f46e5; font-size: 18px;"><i class="fa-solid fa-database"></i> مراجعة قاعدة البيانات الشاملة</h3>
@@ -3526,26 +4547,29 @@
             classSelect.addEventListener("change", function(e) { selectClass(e.target.value); });
 
             addStudentBtn.addEventListener("click", async function() {
-                if (!currentTeacherId) { alert(translations[currentLang].errorSelectTeacher); return; }
-                if (!currentClass) { alert(translations[currentLang].errorSelectClass); return; }
+                if (!currentTeacherId) { alert(t.errorSelectTeacher); return; }
+                if (!currentClass) { alert(t.errorSelectClass); return; }
                 var name = newStudentNameInput.value.trim();
-                if (!name) { alert(currentLang === 'ar' ? "الرجاء إدخال اسم الطالب" : "Please enter student name"); return; }
-                if (originalStudentNames.includes(name)) { alert(currentLang === 'ar' ? "الطالب موجود مسبقاً" : "Student already exists"); return; }
+                if (!name) { alert("الرجاء إدخال اسم الطالب"); return; }
+                if (originalStudentNames.includes(name)) { alert("الطالب موجود مسبقاً"); return; }
                 originalStudentNames.push(name);
                 updateDisplayNames();
                 if (!data[name]) {
-                    data[name] = { state: 0, book: true, notebook: true, homework: true, note: "", participationCounter: 0, absenceCounter: 0, badBehaviorCounter: 0, talkCounter: 0, talkWithoutPermissionCounter: 0, bookNotActiveCounter: 0, notebookNotActiveCounter: 0, homeworkNotActiveCounter: 0, latenessCounter: 0 };
+                    data[name] = { state: 0, book: true, notebook: true, homework: true, note: "",
+                        participationCounter: 0, absenceCounter: 0, badBehaviorCounter: 0, talkCounter: 0,
+                        talkWithoutPermissionCounter: 0, bookNotActiveCounter: 0, notebookNotActiveCounter: 0,
+                        homeworkNotActiveCounter: 0, latenessCounter: 0 };
                 }
                 newStudentNameInput.value = '';
                 await saveAll();
                 initStudentsUI();
                 updateTable();
-                alert(translations[currentLang].studentAdded);
+                alert(t.studentAdded);
             });
 
             importExcel.addEventListener("change", async function(e) {
                 if (!currentTeacherId || !currentClass) {
-                    alert(translations[currentLang].errorSelectTeacher + "\n" + translations[currentLang].errorSelectClass);
+                    alert(t.errorSelectTeacher + "\n" + t.errorSelectClass);
                     return;
                 }
                 var file = e.target.files[0];
@@ -3556,17 +4580,18 @@
                         var wb = XLSX.read(evt.target.result, { type: "binary" });
                         var sheet = wb.Sheets[wb.SheetNames[0]];
                         var rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        var importedNames = rows.map(function(r) { return r[0]; }).filter(Boolean).map(function(name) { return name.toString().trim(); });
+                        var importedNames = rows.map(function(r) { return r[0]; }).filter(Boolean).map(function(
+                        name) { return name.toString().trim(); });
                         originalStudentNames = importedNames;
                         updateDisplayNames();
                         ensureAllStudentsInData();
                         initStudentsUI();
                         updateTable();
                         await saveAll();
-                        alert(currentLang === 'ar' ? ('تم تحميل ' + originalStudentNames.length + ' طالب بنجاح') : ('Successfully loaded ' + originalStudentNames.length + ' students'));
+                        alert('تم تحميل ' + originalStudentNames.length + ' طالب بنجاح');
                         importExcel.value = '';
                     } catch (error) {
-                        alert(currentLang === 'ar' ? "حدث خطأ في تحميل الملف" : "Error loading file");
+                        alert("حدث خطأ في تحميل الملف");
                         console.error(error);
                     }
                 };
@@ -3575,10 +4600,9 @@
 
             resetAllCountersBtn.addEventListener('click', async function() {
                 if (!currentTeacherId || !currentClass) {
-                    showMessage(translations[currentLang].errorSelectTeacher, 'error');
+                    showMessage(t.errorSelectTeacher, 'error');
                     return;
                 }
-                var t = translations[currentLang];
                 if (confirm(t.resetAllConfirm)) {
                     originalStudentNames.forEach(function(name) {
                         if (data[name]) {
@@ -3615,20 +4639,19 @@
             });
 
             classTitleInput.addEventListener("input", async function() {
-                var t = translations[currentLang];
                 boardTitleEl.textContent = t.boardTitle + ' - ' + classTitleInput.value;
                 await saveAll();
             });
 
             studentsContainer.addEventListener('click', function(e) {
-                var t = e.target.closest('.student');
-                if (!t) return;
+                var el = e.target.closest('.student');
+                if (!el) return;
                 if (selectedStudent) {
                     var old = document.querySelector('.student[data-name="' + selectedStudent + '"]');
                     if (old) old.classList.remove('selected');
                 }
-                selectedStudent = t.dataset.name;
-                t.classList.add('selected');
+                selectedStudent = el.dataset.name;
+                el.classList.add('selected');
             });
 
             document.addEventListener('keydown', async function(e) {
@@ -3639,22 +4662,20 @@
                 if (e.key === '4') await setStudentState(selectedStudent, 4);
                 if (e.key === '5') await setStudentState(selectedStudent, 5);
                 if (e.key === '0') await setStudentState(selectedStudent, 0);
-                if (e.key === 'l' || e.key === 'L') await incrementCounter(selectedStudent, 'latenessCounter', 'msgLateness');
+                if (e.key === 'l' || e.key === 'L') await incrementCounter(selectedStudent, 'latenessCounter',
+                    'msgLateness');
                 if (e.key.toLowerCase() === 'r') await resetStudentCounters(selectedStudent);
                 if (e.key === 'Escape') {
-                    var t = document.querySelector('.student[data-name="' + selectedStudent + '"]');
-                    if (t) t.classList.remove('selected');
+                    var tgt = document.querySelector('.student[data-name="' + selectedStudent + '"]');
+                    if (tgt) tgt.classList.remove('selected');
                     selectedStudent = null;
                 }
             });
 
-            document.getElementById("switchToAr").addEventListener("click", function() { applyLanguage('ar'); });
-            document.getElementById("switchToEn").addEventListener("click", function() { applyLanguage('en'); });
-
             // ===== تهيئة الصفحة =====
             updateClassSelect();
             initTeacherSelect();
-            applyLanguage(currentLang);
+            applyArabic();
             renderCalendar();
 
             if (isFirebaseInitialized) {
