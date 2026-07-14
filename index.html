@@ -1542,15 +1542,15 @@
     </div>
 
     <script>
-        // ===== إعدادات Firebase =====
+        // ===== إعدادات Firebase (المشروع الجديد) =====
         var firebaseConfig = {
-            apiKey: "AIzaSyCTQUJV6erfDYbjId7xpuRDPwTmaGGk4e4",
-            authDomain: "mohamedreda-718c9.firebaseapp.com",
-            projectId: "mohamedreda-718c9",
-            storageBucket: "mohamedreda-718c9.firebasestorage.app",
-            messagingSenderId: "52176043182",
-            appId: "1:52176043182:web:fad310260cd179687c413f",
-            measurementId: "G-9QP9FDF9MR"
+            apiKey: "AIzaSyD86DaAqtNcIdTj5nz6A73eF-pn7k8j9es",
+            authDomain: "mohamedreda85-ebf3d.firebaseapp.com",
+            projectId: "mohamedreda85-ebf3d",
+            storageBucket: "mohamedreda85-ebf3d.firebasestorage.app",
+            messagingSenderId: "478928361982",
+            appId: "1:478928361982:web:e952c44fd1ec3bb6b508af",
+            measurementId: "G-K0QHCL941Z"
         };
 
         var firebaseApp, firebaseAuth, firebaseDb;
@@ -1566,10 +1566,10 @@
             console.log("❌ Firebase init error:", error);
         }
 
-        // ===== متغيرات عالمية للمخططات =====
+        // ===== متغيرات عالمية =====
         var teacherChartInstance = null;
         var schoolChartInstance = null;
-        var firebaseListenerRef = null; // مرجع الاستماع للتحديثات
+        var firebaseSyncListener = null;
 
         document.addEventListener("DOMContentLoaded", function() {
             // ===== البيانات الافتراضية =====
@@ -1590,7 +1590,7 @@
 
             // ===== المتغيرات العامة =====
             var classesList = JSON.parse(localStorage.getItem(CLASSES_STORAGE_KEY)) || defaultClasses;
-            var currentLang = 'ar'; // دائمًا عربي
+            var currentLang = 'ar';
             var currentTeacherId = null;
             var currentClass = null;
             var teachersList = JSON.parse(localStorage.getItem('teachers_list')) || defaultTeachers;
@@ -1675,15 +1675,14 @@
             var editModalSave = document.getElementById('editModalSave');
             var editModalCancel = document.getElementById('editModalCancel');
 
-            // ===== دالة التحقق من صلاحية المشرف =====
+            // ===== دالة التحقق من صلاحية المشرف (البريد الجديد) =====
             function isAdminUser() {
                 if (!currentUser) return false;
-                // البريد الإلكتروني الوحيد للمشرف
-                var adminEmails = ['a7112119@gmail.com'];
+                var adminEmails = ['arqamzero@gmail.com'];
                 return adminEmails.includes(currentUser.email);
             }
 
-            // ===== دالة فصل الواجهات حسب الصلاحية (معدلة لإظهار الفصول للمشرف) =====
+            // ===== دالة فصل الواجهات =====
             function applyRoleVisibility() {
                 var isAdmin = isAdminUser();
 
@@ -1698,7 +1697,6 @@
 
                 if (isAdmin) {
                     teacherElements.forEach(function(el) { if (el) el.style.display = 'none'; });
-                    // تعديل: إظهار قائمة الفصول للمشرف بدلاً من إخفائها
                     if (classSection) classSection.style.display = '';
                     if (chartsSection) chartsSection.style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(function(btn) {
@@ -1724,7 +1722,7 @@
                 }
             }
 
-            // ===== دالة رسم المخططات البيانية =====
+            // ===== دالة رسم المخططات =====
             function renderAdminVisualCharts() {
                 if (!isAdminUser()) return;
 
@@ -1870,9 +1868,11 @@
                 return 'original_names_' + currentTeacherId + '_' + currentClass;
             }
 
-            // ===== الدالة المعدلة FIREBASE_PATH (مسار عام بدون uid) =====
+            // ===== المسار الجديد: يبدأ بـ "users" كما هو مطلوب =====
             function FIREBASE_PATH() {
-                return 'teachers/' + currentTeacherId + '/classes/' + currentClass;
+                if (!currentUser) return null;
+                var adminUid = currentUser.uid;
+                return 'users/' + currentTeacherId + '/supervisors/' + adminUid + '/classes/' + currentClass;
             }
 
             // ===== دالة showMessage =====
@@ -1938,9 +1938,7 @@
                 if (currentTeacherId) {
                     loadData();
                 }
-                // تحديث بطاقة المعلم
                 updateTeacherCard();
-                // تحديث لوحة المشرف
                 if (isAdminUser()) {
                     setTimeout(function() {
                         renderAdminVisualCharts();
@@ -2072,7 +2070,7 @@
                 return map[subject] || 'fa-chalkboard-user';
             }
 
-            // ===== دالة تحديث بطاقة المعلم مع إضافة القسم =====
+            // ===== دالة تحديث بطاقة المعلم =====
             function updateTeacherCard() {
                 var teacher = teachersList.find(function(tch) { return tch.id === currentTeacherId; });
                 if (!teacher) {
@@ -2095,13 +2093,12 @@
                 `;
             }
 
-            // ===== دوال Firebase المعدلة =====
+            // ===== دوال Firebase =====
 
-            // 2. دالة saveToFirebase المعدلة
             async function saveToFirebase() {
-                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return;
+                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return false;
                 var path = FIREBASE_PATH();
-                if (!path) return;
+                if (!path) return false;
                 var teacher = teachersList.find(function(t) { return t.id === currentTeacherId; });
                 var saveData = {
                     datesData: allHistoryData,
@@ -2112,51 +2109,75 @@
                 };
                 try {
                     await firebaseDb.ref(path).set(saveData);
+                    console.log('✅ تم حفظ البيانات في Firebase:', path);
                     return true;
                 } catch (e) {
-                    console.error(e);
+                    console.error('❌ خطأ في حفظ البيانات إلى Firebase:', e);
                     showMessage(t.firebase.syncError, 'error');
                     return false;
                 }
             }
 
-            // 3. دالة listenToFirebase للاستماع للتحديثات الفورية
-            function listenToFirebase() {
-                if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return;
-                var path = FIREBASE_PATH();
-                if (!path) return;
-                if (firebaseListenerRef) {
-                    firebaseListenerRef.off();
-                    firebaseListenerRef = null;
+            // ===== المزامنة التلقائية (بدون أزرار) =====
+            function startAutomaticSync() {
+                if (firebaseSyncListener) {
+                    firebaseSyncListener.off();
+                    firebaseSyncListener = null;
                 }
-                var ref = firebaseDb.ref(path);
-                firebaseListenerRef = ref;
-                ref.on('value', function(snapshot) {
-                    var fbData = snapshot.val();
-                    if (fbData) {
-                        if (fbData.datesData) { allHistoryData = fbData.datesData;
-                            localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData)); }
-                        if (fbData.originalStudentNames) { originalStudentNames = fbData.originalStudentNames;
-                            localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(
-                            originalStudentNames)); }
-                        if (fbData.teacherName) boardTitleEl.textContent = t.boardTitle + ' - ' + fbData
-                            .teacherName;
+
+                if (!currentUser || storageMode !== 'cloud' || !currentTeacherId || !currentClass) {
+                    console.log('⚠️ لا يمكن بدء المزامنة التلقائية: البيانات غير مكتملة');
+                    return;
+                }
+
+                var path = FIREBASE_PATH();
+                if (!path) {
+                    console.log('⚠️ المسار غير صحيح للمزامنة التلقائية');
+                    return;
+                }
+
+                console.log('🔄 بدء المزامنة التلقائية على المسار:', path);
+
+                var dbRef = firebaseDb.ref(path);
+                firebaseSyncListener = dbRef;
+
+                dbRef.on('value', function(snapshot) {
+                    if (snapshot.exists()) {
+                        var cloudData = snapshot.val();
+                        console.log('☁️ تم استقبال بيانات جديدة من السحابة');
+
+                        if (cloudData.datesData) {
+                            allHistoryData = cloudData.datesData;
+                            localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
+                        }
+                        if (cloudData.originalStudentNames) {
+                            originalStudentNames = cloudData.originalStudentNames;
+                            localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
+                        }
+                        if (cloudData.teacherName) {
+                            boardTitleEl.textContent = t.boardTitle + ' - ' + cloudData.teacherName;
+                        }
+
                         ensureAllStudentsInData();
                         refreshUI();
+
                         if (isAdminUser()) {
                             setTimeout(function() {
                                 renderAdminVisualCharts();
                                 renderAdminTable();
-                            }, 100);
+                            }, 300);
                         }
-                        showMessage('تم تحديث البيانات من السحابة فوراً', 'success');
+
+                        showMessage('تم تحديث البيانات من السحابة فوراً ☁️🔄', 'success');
+                    } else {
+                        console.log('ℹ️ لا توجد بيانات في هذا المسار بعد');
                     }
                 }, function(error) {
-                    console.error('Firebase listen error:', error);
+                    console.error('❌ خطأ في الاستماع للتغييرات:', error);
                 });
             }
 
-            // 4. دالة loadFromFirebase المعدلة
+            // ===== تحميل البيانات من Firebase =====
             async function loadFromFirebase() {
                 if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return false;
                 var path = FIREBASE_PATH();
@@ -2243,7 +2264,7 @@
                 var loaded = false;
                 if (storageMode === 'cloud' && currentUser && isFirebaseInitialized) {
                     loaded = await loadFromFirebase();
-                    listenToFirebase();
+                    startAutomaticSync();
                 }
                 if (!loaded) loadDataFromLocalStorage();
                 refreshUI();
@@ -2367,7 +2388,9 @@
                     return;
                 }
                 updateFirebaseUI();
-                if (currentTeacherId && currentClass) loadData();
+                if (currentTeacherId && currentClass) {
+                    loadData();
+                }
                 showMessage(mode === 'local' ? t.firebase.storageLocal : t.firebase.storageCloud, 'success');
             }
 
@@ -2480,7 +2503,7 @@
                     await firebaseDb.ref('users/' + currentUser.uid + '/profile').set({
                         email: email,
                         name: email.split('@')[0] || 'مستخدم',
-                        role: email === 'a7112119@gmail.com' ? 'admin' : 'user',
+                        role: email === 'arqamzero@gmail.com' ? 'admin' : 'user',
                         createdAt: new Date().toISOString()
                     });
 
@@ -2564,15 +2587,15 @@
                 }
             }
 
-            // ===== دالة تسجيل الخروج المعدلة (إظهار نموذج تسجيل الدخول) =====
+            // ===== دالة تسجيل الخروج =====
             async function logout() {
                 try {
+                    if (firebaseSyncListener) {
+                        firebaseSyncListener.off();
+                        firebaseSyncListener = null;
+                    }
                     await firebaseAuth.signOut();
                     currentUser = null;
-                    if (firebaseListenerRef) {
-                        firebaseListenerRef.off();
-                        firebaseListenerRef = null;
-                    }
                     showMessage(t.firebase.logoutSuccess, 'success');
                     allHistoryData = {};
                     data = {};
@@ -2580,7 +2603,6 @@
                     studentNames = [];
                     refreshUI();
                     updateFirebaseUI();
-                    // إظهار نموذج تسجيل الدخول بعد تسجيل الخروج
                     showLoginForm();
                 } catch (error) {
                     console.error("❌ خطأ في تسجيل الخروج:", error);
@@ -2645,7 +2667,6 @@
                 if (!teacher) return;
                 updateTeacherCard();
                 if (currentClass) loadData();
-                // تحديث لوحة المشرف
                 if (isAdminUser()) {
                     setTimeout(function() {
                         renderAdminVisualCharts();
@@ -2664,27 +2685,6 @@
                         renderAdminTable();
                     }, 100);
                 }
-            }
-
-            function loadDataFromLocalStorage() {
-                allHistoryData = JSON.parse(localStorage.getItem(STORAGE_KEY_DATA())) || {};
-                originalStudentNames = JSON.parse(localStorage.getItem(STORAGE_KEY_ORIGINAL_NAMES())) || [];
-                if (originalStudentNames.length === 0) {
-                    var oldNames = JSON.parse(localStorage.getItem('tracking_names_' + currentTeacherId + '_' +
-                    currentClass)) || [];
-                    originalStudentNames = oldNames.slice();
-                    localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
-                }
-                ensureAllStudentsInData();
-            }
-
-            function updateDisplayNames() {
-                studentNames = originalStudentNames.slice();
-            }
-
-            function updateDateDisplay() {
-                var dateStr = formattedSelectedDate();
-                currentDateDisplayEl.textContent = dateStr;
             }
 
             function saveTeachersList() {
@@ -2773,14 +2773,14 @@
                             var userData = dbUsers[uid];
                             var userEmail = userData.profile?.email || '';
 
-                            if (userEmail === 'a7112119@gmail.com') {
+                            if (userEmail === 'arqamzero@gmail.com') {
                                 keptCount++;
                                 await firebaseDb.ref('users/' + uid + '/teachers').remove();
                                 await firebaseDb.ref('users/' + uid + '/profile/name').remove();
                                 await firebaseDb.ref('users/' + uid + '/profile/lastLogin').remove();
                                 await firebaseDb.ref('users/' + uid + '/profile/role').remove();
                                 await firebaseDb.ref('users/' + uid + '/profile').update({
-                                    email: 'a7112119@gmail.com'
+                                    email: 'arqamzero@gmail.com'
                                 });
                                 console.log('✅ تم تنظيف بيانات المشرف');
                                 continue;
@@ -2808,7 +2808,7 @@
                         updateTable();
                         boardTitleEl.textContent = t.boardTitle;
 
-                        showMessage('✅ تم حذف كل البيانات بنجاح!\nتم الاحتفاظ فقط بالمشرف (a7112119@gmail.com)',
+                        showMessage('✅ تم حذف كل البيانات بنجاح!\nتم الاحتفاظ فقط بالمشرف (arqamzero@gmail.com)',
                             'success');
 
                         setTimeout(function() {
@@ -2891,7 +2891,7 @@
                     }
 
                     var confirmDelete = confirm(
-                        '⚠️ تحذير: هل أنت متأكد من حذف جميع المستخدمين ما عدا المشرف (a7112119@gmail.com)؟\n\nسيتم حذف جميع بيانات المستخدمين الآخرين بشكل نهائي!'
+                        '⚠️ تحذير: هل أنت متأكد من حذف جميع المستخدمين ما عدا المشرف (arqamzero@gmail.com)؟\n\nسيتم حذف جميع بيانات المستخدمين الآخرين بشكل نهائي!'
                         );
                     if (!confirmDelete) return;
 
@@ -2911,7 +2911,7 @@
                             var userData = dbUsers[uid];
                             var userEmail = userData.profile?.email || '';
 
-                            if (userEmail === 'a7112119@gmail.com') {
+                            if (userEmail === 'arqamzero@gmail.com') {
                                 keptCount++;
                                 console.log('✅ الاحتفاظ بالمشرف:', userEmail);
                                 continue;
@@ -4718,7 +4718,7 @@
                 }
             });
 
-            // ===== التهيئة المعدلة (اختيار أول معلم وقسم تلقائياً) =====
+            // ===== التهيئة =====
             function init() {
                 if (isFirebaseInitialized && firebaseAuth.currentUser) {
                     currentUser = firebaseAuth.currentUser;
@@ -4729,7 +4729,6 @@
                 renderCalendar();
                 updateFirebaseUI();
 
-                // تحديد القسم والمسؤول الافتراضي تلقائياً
                 if (classesList && classesList.length > 0) {
                     currentClass = document.getElementById('classSelect').value || classesList[0];
                 }
