@@ -1869,10 +1869,10 @@
                 return 'original_names_' + currentTeacherId + '_' + currentClass;
             }
 
-            // ===== المسار الجديد المتوافق مع قواعد الأمان =====
+            // ===== المسار الجديد المتوافق مع قواعد الأمان (التعديل الأساسي) =====
             function FIREBASE_PATH() {
                 if (!currentUser) return null;
-                return 'users/' + currentTeacherId + '/supervisors/' + currentUser.uid + '/classes/' + currentClass;
+                return 'users/' + currentUser.uid + '/teachers/' + currentTeacherId + '/classes/' + currentClass;
             }
 
             // ===== دالة showMessage =====
@@ -2095,7 +2095,7 @@
 
             // ===== دوال Firebase المعدلة =====
 
-            // حفظ البيانات إلى Firebase
+            // حفظ البيانات إلى Firebase (باستخدام المسار الجديد)
             async function saveToFirebase() {
                 if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return false;
                 var path = FIREBASE_PATH();
@@ -2119,7 +2119,7 @@
                 }
             }
 
-            // ===== المزامنة التلقائية (Real-time) - مع التعديل لاختيار الفصل تلقائياً =====
+            // ===== المزامنة التلقائية (Real-time) - مع مراقبة المسار الجديد =====
             function startAutomaticSync() {
                 // إلغاء المستمع السابق إن وجد
                 if (firebaseSyncListener) {
@@ -2127,7 +2127,7 @@
                     firebaseSyncListener = null;
                 }
 
-                // ===== تعديل: اختيار الفصل تلقائياً إذا لم يكن محدداً =====
+                // التأكد من وجود فصل
                 if (!currentClass) {
                     const classSelectEl = document.getElementById('classSelect');
                     if (classSelectEl && classSelectEl.options.length > 0) {
@@ -2152,7 +2152,6 @@
                 }
 
                 console.log('🔄 بدء المزامنة التلقائية على المسار:', path);
-
                 var dbRef = firebaseDb.ref(path);
                 firebaseSyncListener = dbRef;
 
@@ -2192,7 +2191,7 @@
                 });
             }
 
-            // ===== تحميل البيانات من Firebase =====
+            // ===== تحميل البيانات من Firebase (باستخدام المسار الجديد) =====
             async function loadFromFirebase() {
                 if (!isFirebaseInitialized || !currentUser || storageMode !== 'cloud') return false;
                 var path = FIREBASE_PATH();
@@ -2201,13 +2200,15 @@
                     var snap = await firebaseDb.ref(path).once('value');
                     var fbData = snap.val();
                     if (fbData) {
-                        if (fbData.datesData) { allHistoryData = fbData.datesData;
-                            localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData)); }
-                        if (fbData.originalStudentNames) { originalStudentNames = fbData.originalStudentNames;
-                            localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(
-                            originalStudentNames)); }
-                        if (fbData.teacherName) boardTitleEl.textContent = t.boardTitle + ' - ' + fbData
-                            .teacherName;
+                        if (fbData.datesData) {
+                            allHistoryData = fbData.datesData;
+                            localStorage.setItem(STORAGE_KEY_DATA(), JSON.stringify(allHistoryData));
+                        }
+                        if (fbData.originalStudentNames) {
+                            originalStudentNames = fbData.originalStudentNames;
+                            localStorage.setItem(STORAGE_KEY_ORIGINAL_NAMES(), JSON.stringify(originalStudentNames));
+                        }
+                        if (fbData.teacherName) boardTitleEl.textContent = t.boardTitle + ' - ' + fbData.teacherName;
                         loadDataFromLocalStorage();
                         return true;
                     }
@@ -2280,8 +2281,7 @@
                 var loaded = false;
                 if (storageMode === 'cloud' && currentUser && isFirebaseInitialized) {
                     loaded = await loadFromFirebase();
-                    // ===== تعديل: بدء المزامنة التلقائية بعد التحميل =====
-                    startAutomaticSync();
+                    startAutomaticSync(); // بدء المزامنة التلقائية بعد التحميل
                 }
                 if (!loaded) loadDataFromLocalStorage();
                 refreshUI();
@@ -2635,7 +2635,6 @@
                 }
 
                 let selectedClass = document.getElementById('classSelect').value;
-                // ===== تعديل: اختيار الفصل تلقائياً إذا لم يكن محدداً =====
                 if (!selectedClass && isAdminUser()) {
                     const classSelectEl = document.getElementById('classSelect');
                     if (classSelectEl && classSelectEl.options.length > 0) {
@@ -3092,15 +3091,14 @@
                         if (key.includes('original_names_' + currentTeacherId + '_')) keysToRemove.push(key);
                     });
                     keysToRemove.forEach(function(key) { localStorage.removeItem(key); });
+                    // حذف من Firebase باستخدام المسار الجديد
                     if (storageMode === 'cloud' && currentUser && isFirebaseInitialized) {
-                        var path = FIREBASE_PATH();
-                        if (path) {
-                            firebaseDb.ref(path).remove().then(function() {
-                                console.log("✅ تم حذف بيانات المعلم من Firebase");
-                            }).catch(function(err) {
-                                console.error("❌ خطأ في حذف بيانات المعلم من Firebase:", err);
-                            });
-                        }
+                        var path = 'users/' + currentUser.uid + '/teachers/' + currentTeacherId;
+                        firebaseDb.ref(path).remove().then(function() {
+                            console.log("✅ تم حذف بيانات المعلم من Firebase");
+                        }).catch(function(err) {
+                            console.error("❌ خطأ في حذف بيانات المعلم من Firebase:", err);
+                        });
                     }
                     teacherSelect.value = "";
                     currentTeacherId = null;
@@ -4797,7 +4795,7 @@
                     }, 100);
                 }
 
-                // ===== تعديل: بعد تعيين المعلم والقسم، تحميل البيانات وبدء المزامنة التلقائية فوراً =====
+                // بعد تعيين المعلم والقسم، تحميل البيانات وبدء المزامنة التلقائية فوراً
                 setTimeout(function() {
                     if (currentTeacherId && currentClass) {
                         loadData().then(() => {
