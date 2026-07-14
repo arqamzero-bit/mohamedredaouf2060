@@ -1859,11 +1859,10 @@
                 return 'original_names_' + currentTeacherId + '_' + currentClass;
             }
 
-            function FIREBASE_PATH() {
-                if (!currentUser) return null;
-                return 'users/' + currentUser.uid + '/teachers/' + currentTeacherId + '/classes/' + currentClass;
-            }
-
+        function FIREBASE_PATH() {
+  // المسار العام بدون uid
+  return 'supervisors/' + currentSupervisorId + '/classes/' + currentClass;
+}
             function showMessage(message, type) {
                 type = type || 'info';
                 var messageDiv = document.createElement('div');
